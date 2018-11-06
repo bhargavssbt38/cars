@@ -1,8 +1,10 @@
 package app;
 
+import pages.DisplayPage;
+
 public class Application {
 
-    public static String currentUser = null; // User ID of current logged in user
+    public static User currentUser = null; // User ID of current logged in user
 
     public static void main(String[] args) {
         startApplication();

@@ -1,8 +1,11 @@
-package app;
+package pages;
+
+import app.Application;
+import app.User;
 
 import java.util.*;
 
-public class UserLoginSignup {
+public class EntryPage {
 
     static Scanner scanner = new Scanner(System.in);
 
@@ -17,17 +20,14 @@ public class UserLoginSignup {
             System.out.println("Login Incorrect");
             signInUser();
         } else {
-            Application.currentUser = userID;
             String userType = getUserType(userID);
-            if(userType == null) {
-                System.out.println("Invalid user");
-                System.exit(0);
-            } else if("manager".equalsIgnoreCase(userType)) {
-                DisplayPage.managerLandingPage();
+            Application.currentUser = new User(userID, userType);
+            if("manager".equalsIgnoreCase(userType)) {
+                ManagerPage.landingPage();
             } else if("customer".equalsIgnoreCase(userType)) {
-                DisplayPage.customerLandingPage();
+                CustomerPage.landingPage();
             } else if("receptionist".equalsIgnoreCase(userType)) {
-                DisplayPage.receptionistLandingPage();
+                ManagerPage.landingPage();
             }
         }
     }
@@ -59,7 +59,7 @@ public class UserLoginSignup {
     private static String getUserType(String userID) throws Exception {
         // UNCOMMENT NEXT LINE
         //String userType = null;
-        String userType = "manager"; // RETURNING DEFAULT VALUE FOR TESTING
+        String userType = "customer"; // RETURNING DEFAULT VALUE FOR TESTING
 
         return userType;
     }

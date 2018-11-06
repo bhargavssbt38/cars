@@ -1,4 +1,4 @@
-package app;
+package pages;
 
 import java.util.*;
 
@@ -38,7 +38,7 @@ public class DisplayPage {
         int option = scanner.nextInt();
         switch(option) {
             case 1:
-                UserLoginSignup.signInUser();
+                EntryPage.signInUser();
                 break;
             case 2:
                 homePage();
@@ -57,7 +57,7 @@ public class DisplayPage {
         int option = scanner.nextInt();
         switch(option) {
             case 1:
-                UserLoginSignup.signUpUser();
+                EntryPage.signUpUser();
                 break;
             case 2:
                 homePage();
@@ -69,10 +69,6 @@ public class DisplayPage {
     }
 
     public static void managerLandingPage() throws Exception {
-
-    }
-
-    public static void customerLandingPage() throws Exception {
 
     }
 
