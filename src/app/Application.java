@@ -1,6 +1,7 @@
 package app;
 
 import pages.DisplayPage;
+import users.User;
 
 public class Application {
 

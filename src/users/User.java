@@ -1,4 +1,4 @@
-package app;
+package users;
 
 public class User {
 
@@ -9,5 +9,7 @@ public class User {
         this.userID = userID;
         this.userType = userType;
     }
+
+    public void landingPage() throws Exception { }
 
 }

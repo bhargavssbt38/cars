@@ -1,7 +1,7 @@
 package pages;
 
-import app.Application;
-import app.User;
+import app.*;
+import users.*;
 
 import java.util.*;
 
@@ -21,13 +21,15 @@ public class EntryPage {
             signInUser();
         } else {
             String userType = getUserType(userID);
-            Application.currentUser = new User(userID, userType);
             if("manager".equalsIgnoreCase(userType)) {
-                ManagerPage.landingPage();
+                Application.currentUser = new Manager(userID);
+                Application.currentUser.landingPage();
             } else if("customer".equalsIgnoreCase(userType)) {
-                CustomerPage.landingPage();
+                Application.currentUser = new Customer(userID);
+                Application.currentUser.landingPage();
             } else if("receptionist".equalsIgnoreCase(userType)) {
-                ManagerPage.landingPage();
+                Application.currentUser = new Receptionist(userID);
+                Application.currentUser.landingPage();
             }
         }
     }

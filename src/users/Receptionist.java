@@ -1,14 +1,19 @@
-package pages;
+package users;
 
 import app.Application;
+import pages.DisplayPage;
 
 import java.util.*;
 
-public class ReceptionistPage {
+public class Receptionist extends Employee {
 
     static Scanner scanner = new Scanner(System.in);
 
-    public static void landingPage() throws Exception {
+    public Receptionist(String userID) {
+        super(userID, "receptionist");
+    }
+
+    public void landingPage() throws Exception {
         System.out.println("\nRECEPTIONIST LANDING PAGE:");
         System.out.println("\t1. Profile");
         System.out.println("\t2. View Customer Profile");
@@ -24,10 +29,10 @@ public class ReceptionistPage {
         int option = scanner.nextInt();
         switch(option) {
             case 1:
-                EmployeePage.profile();
+                this.profile();
                 break;
             case 2:
-                EmployeePage.viewCustomerProfile();
+                this.viewCustomerProfile();
                 break;
             case 3:
                 registerCar();
@@ -60,31 +65,31 @@ public class ReceptionistPage {
         }
     }
 
-    private static void registerCar() throws Exception {
+    private void registerCar() throws Exception {
 
     }
 
-    private static void serviceHistory() throws Exception {
+    private void serviceHistory() throws Exception {
 
     }
 
-    private static void scheduleService() throws Exception {
+    private void scheduleService() throws Exception {
 
     }
 
-    private static void rescheduleService() throws Exception {
+    private void rescheduleService() throws Exception {
 
     }
 
-    private static void invoices() throws Exception {
+    private void invoices() throws Exception {
 
     }
 
-    private static void updateInventory() throws Exception {
+    private void updateInventory() throws Exception {
 
     }
 
-    private static void recordDeliveries() throws Exception {
+    private void recordDeliveries() throws Exception {
 
     }
 }

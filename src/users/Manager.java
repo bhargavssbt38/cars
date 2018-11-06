@@ -1,14 +1,19 @@
-package pages;
+package users;
 
 import app.Application;
+import pages.DisplayPage;
 
 import java.util.*;
 
-public class ManagerPage {
+public class Manager extends Employee {
 
     static Scanner scanner = new Scanner(System.in);
 
-    public static void landingPage() throws Exception {
+    public Manager(String userID) {
+        super(userID, "manager");
+    }
+
+    public void landingPage() throws Exception {
         System.out.println("\nMANAGER LANDING PAGE:");
         System.out.println("\t1. Profile");
         System.out.println("\t2. View Customer Profile");
@@ -26,10 +31,10 @@ public class ManagerPage {
         int option = scanner.nextInt();
         switch(option) {
             case 1:
-                EmployeePage.profile();
+                this.profile();
                 break;
             case 2:
-                EmployeePage.viewCustomerProfile();
+                this.viewCustomerProfile();
                 break;
             case 3:
                 addNewEmployees();
@@ -68,39 +73,39 @@ public class ManagerPage {
         }
     }
 
-    private static void addNewEmployees() throws Exception {
+    private void addNewEmployees() throws Exception {
 
     }
 
-    private static void payroll() throws Exception {
+    private void payroll() throws Exception {
 
     }
 
-    private static void inventory() throws Exception {
+    private void inventory() throws Exception {
 
     }
 
-    private static void orders() throws Exception {
+    private void orders() throws Exception {
 
     }
 
-    private static void notifications() throws Exception {
+    private void notifications() throws Exception {
 
     }
 
-    private static void newCarModel() throws Exception {
+    private void newCarModel() throws Exception {
 
     }
 
-    private static void carServiceDetails() throws Exception {
+    private void carServiceDetails() throws Exception {
 
     }
 
-    private static void serviceHistory() throws Exception {
+    private void serviceHistory() throws Exception {
 
     }
 
-    private static void invoices() throws Exception {
+    private void invoices() throws Exception {
 
     }
 }

@@ -1,14 +1,19 @@
-package pages;
+package users;
 
 import app.Application;
+import pages.DisplayPage;
 
 import java.util.*;
 
-public class CustomerPage {
+public class Customer extends User {
 
     static Scanner scanner = new Scanner(System.in);
 
-    public static void landingPage() throws Exception {
+    public Customer(String userID) {
+        super(userID, "customer");
+    }
+
+    public void landingPage() throws Exception {
         System.out.println("\nCUSTOMER LANDING PAGE:");
         System.out.println("\t1. Profile");
         System.out.println("\t2. Register Car");
@@ -40,19 +45,19 @@ public class CustomerPage {
         }
     }
 
-    private static void profileMenu() {
+    private void profileMenu() {
 
     }
 
-    private static void registerCarMenu() {
+    private void registerCarMenu() {
 
     }
 
-    private static void serviceMenu() {
+    private void serviceMenu() {
 
     }
 
-    private static void invoicesMenu() {
+    private void invoicesMenu() {
 
     }
 
