@@ -1,7 +1,7 @@
 package users;
 
-import app.Application;
-import pages.DisplayPage;
+import app.*;
+import pages.*;
 
 import java.util.*;
 
