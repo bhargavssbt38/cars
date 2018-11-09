@@ -61,7 +61,7 @@ public class EntryPage {
     private static String getUserType(String userID) throws Exception {
         // UNCOMMENT NEXT LINE
         //String userType = null;
-        String userType = "customer"; // RETURNING DEFAULT VALUE FOR TESTING
+        String userType = "receptionist"; // RETURNING DEFAULT VALUE FOR TESTING
 
         return userType;
     }
