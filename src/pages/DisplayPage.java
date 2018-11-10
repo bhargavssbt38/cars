@@ -68,12 +68,4 @@ public class DisplayPage {
         }
     }
 
-    public static void managerLandingPage() throws Exception {
-
-    }
-
-    public static void receptionistLandingPage() throws Exception {
-
-    }
-
 }
