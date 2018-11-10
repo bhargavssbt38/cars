@@ -43,14 +43,38 @@ public class Employee extends User {
     //C. Address
     //D. Email Address
     //E. Phone Number
+  //H. Start Date
     //F. Service Center
+  //I. Compensation ($)
     //G. Role
-    //H. Start Date
-    //I. Compensation ($)
     //J. Compensation Frequency (monthly/hourly)
     private void viewProfile() throws Exception {
         System.out.println("\nVIEW PROFILE:");
         // TODO: display profile details
+       String id=Application.currentUser.userID;
+        String utype=Application.currentUser.userType;
+        Application.rs = Application.stmt.executeQuery("select employee.emp_id,employee.emp_name,employee.addr,employee.phone,employee.email,payroll.start_date,payroll.wages,payroll.frequency from employee,payroll where employee.emp_id="+id+"AND employee.emp_id=payroll.emp_id");
+		while (Application.rs.next()) {
+		    String eid= Application.rs.getString("emp_id");
+		    String name = Application.rs.getString("emp_name");
+		    String addr = Application.rs.getString("addr");
+		    String phone = Application.rs.getString("phone");
+		    String email= Application.rs.getString("email");
+		    float wages=Application.rs.getFloat("wages");
+		    Date startdate=Application.rs.getDate("start_date");
+		    String frequency= Application.rs.getString("frequency");
+		    
+		    System.out.println("Employee ID: "+eid);
+		    System.out.println("Employee Name: " +name);
+		    System.out.println("Address: " +addr);
+		    System.out.println("Phone: " +phone);
+		    System.out.println("email: " +email);
+		    System.out.println("Wages: " +wages);
+		    System.out.println("Start Date: " +startdate);
+		    System.out.println("frequency: " +frequency);
+		    System.out.println("Role: 1" +utype);
+		}
+
         System.out.println("MENU:");
         System.out.println("\t1. Go back");
         System.out.println("Enter option: ");
