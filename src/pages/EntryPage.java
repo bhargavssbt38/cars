@@ -11,16 +11,16 @@ public class EntryPage {
 
     public static void signInUser() throws Exception {
         System.out.println("\nSIGN-IN");
-        System.out.println("\tA. Enter user ID: ");
-        String userID = scanner.next();
+        System.out.println("\tA. Enter email: ");
+        String email = scanner.next();
         System.out.println("\tB. Enter password: ");
         String password = scanner.next();
-        boolean valid = validateCredentials(userID, password);
-        if(!valid) {
+        String userID = validateCredentials(email, password);
+        if(userID == null) {
             System.out.println("Login Incorrect");
             signInUser();
         } else {
-            String userType = getUserType(userID);
+            String userType = getUserType(userID, email);
             if("manager".equalsIgnoreCase(userType)) {
                 Application.currentUser = new Manager(userID);
                 Application.currentUser.landingPage();
@@ -58,10 +58,32 @@ public class EntryPage {
     }
 
     // TODO: return "manager", "customer", "receptionist" based on userID by querying db; return null if invalid user
-    private static String getUserType(String userID) throws Exception {
-        // UNCOMMENT NEXT LINE
-        //String userType = null;
-        String userType = "receptionist"; // RETURNING DEFAULT VALUE FOR TESTING
+    private static String getUserType(String userID, String email) throws Exception {
+        String userType = null;
+
+        // Joining login table with customer table
+        String query = "select * from customer inner join login on customer.email = login.email where login.email = '" + email + "'";
+        Application.rs = Application.stmt.executeQuery(query);
+        while(Application.rs.next()) {
+            userType = "customer";
+            return userType;
+        }
+
+        // Joining login table with manager table
+        query = "select * from manager inner join login on manager.emp_id = login.id where login.id = '" + userID + "'";
+        Application.rs = Application.stmt.executeQuery(query);
+        while(Application.rs.next()) {
+            userType = "manager";
+            return userType;
+        }
+
+        // Joining login table with receptionist table
+        query = "select * from receptionist inner join login on receptionist.emp_id = login.id where login.id = '" + userID + "'";
+        Application.rs = Application.stmt.executeQuery(query);
+        while(Application.rs.next()) {
+            userType = "receptionist";
+            return userType;
+        }
 
         return userType;
     }
@@ -89,13 +111,15 @@ public class EntryPage {
         return true;
     }
 
-    // TODO: query username password from db and validate credentials
-    private static boolean validateCredentials(String userID, String password) throws Exception {
-        // UNCOMMENT NEXT LINE
-        //boolean valid = false;
-        boolean valid = true; // RETURNING VALID TRUE BY DEFAULT FOR TESTING - REMOVE LATER
-
-        return valid;
+    // TODO: query username password from db and validate credentials & return UserID
+    private static String validateCredentials(String email, String password) throws Exception {
+        String userID = null;
+        String query = "select id from login where email = '" + email + "' and password = '" + password + "'";
+        Application.rs = Application.stmt.executeQuery(query);
+        while (Application.rs.next()) {
+            userID = Application.rs.getString("id");
+        }
+        return userID;
     }
 
 }
