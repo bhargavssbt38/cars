@@ -87,13 +87,48 @@ public class Manager extends Employee {
     	        System.out.println("Enter the Email Address of the employee");
     	        String emailaddr=scanner.next();
     	        System.out.println("Enter the phone number");
-    	        int phone=scanner.nextInt();
+    	        String phone=scanner.next();
     	        System.out.println("Enter the Role of the employee");
     	        String role=scanner.next();
     	        System.out.println("Enter the Start Date");
     	        String startdate=scanner.next();
     	        System.out.println("Enter the Compensation of the employee in USD");
     	        int compensation=scanner.nextInt();
+
+    	        String insertStmt = "insert into employee (emp_id, emp_name, addr, phone, 3email) values (";
+    	        System.out.println("sdsdf\n");
+    	        Application.rs = Application.stmt.executeQuery("select count(*) as C from employee");
+    	        String recCount = "";
+                while( Application.rs.next() )
+                {
+                    recCount = Application.rs.getString("C");
+                   // System.out.println(recCount+" is the count");
+                }
+                int recCt = Integer.parseInt(recCount);
+                recCt++;
+                recCount = String.valueOf(recCt);
+                insertStmt+=recCount;
+                insertStmt+=(","+name+","+address+","+phone+","+emailaddr+")");
+                System.out.println(insertStmt);
+
+                String scId = "";
+                String managerId="";
+
+                String getManagerId = "select manager_id from manager where emp_id = userID";
+                Application.rs = Application.stmt.executeQuery(getManagerId);
+                while( Application.rs.next() )
+                {
+                    managerId = Application.rs.getString("manager_id");
+                    // System.out.println(recCount+" is the count");
+                }
+                System.out.println("Manager is " + managerId);
+                //Inserting into the particular role's table
+                /*
+                if(role == "manager")
+                {
+                    String managerInsert = "select from"
+                }
+                */
     	        System.out.println("Employee successfully created");
     	        landingPage();
     	        break;
