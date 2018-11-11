@@ -3,13 +3,16 @@ package users;
 import app.*;
 import pages.*;
 
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.*;
 import java.util.regex.Pattern;
 
 public class Customer extends User {
 
     static Scanner scanner = new Scanner(System.in);
-
+    public static ResultSet rs2 = null;
+    public static Statement stmt2 = null;
     public Customer(String userID) {
         super(userID, "customer");
     }
@@ -398,6 +401,82 @@ public class Customer extends User {
     private void viewServiceHistory() throws Exception {
         System.out.println("\nVIEW SERVICE HISTORY:");
         // TODO: display details
+        String id=Application.currentUser.userID;
+        Application.rs=Application.stmt.executeQuery("select employee.emp_name,servicereln.license_no,servicereln.service_id,repair.repair_id,timeslot.mechanic_id,timeslot.service_date,timeslot.service_time,timeslot.end_date,timeslot.end_time from employee,repair,servicereln,timeslot,mechanic where servicereln.customer_id='"+id+"' AND timeslot.service_id=servicereln.service_id AND servicereln.service_id = repair.service_id AND timeslot.mechanic_id= mechanic.mechanic_id AND mechanic.emp_id=employee.emp_id");
+        
+        System.out.println("The customer service History:");
+        
+        
+        while (Application.rs.next()) {
+        
+        	String mechanic_name = Application.rs.getString("emp_name");
+  		    String license = Application.rs.getString("license_no");
+  		    String service_id = Application.rs.getString("service_id");
+  		    String repair_id = Application.rs.getString("repair_id");
+  		    String mechanic_id = Application.rs.getString("mechanic_id");
+  		    Date start_date = Application.rs.getDate("service_date");
+  		    String start_time=Application.rs.getString("service_time");
+  		    Date end_date=Application.rs.getDate("end_date");
+  		    String end_time=Application.rs.getString("end_time");
+  		  System.out.println("The Customer ID is:" +id);
+  		    System.out.println("The Service ID for the service is:" +service_id);
+  		  System.out.println("The License Plate for the car in this service is:" +license);
+  		  System.out.println("The Service Type involved in this Service is Repair");
+  		  System.out.println("The Mechanic Involved in this service is: " +mechanic_name);
+  		  System.out.println("This Service Started on: "+start_date);
+  		  System.out.println("Start Time:"+start_time);
+  		 
+  		  
+  		  if(end_time== null || end_time.isEmpty())
+  		  {
+  			  System.out.println(" The Status of this Service is still ongoing");
+  		  }
+  		  else
+  			  System.out.println("This service is completed and ended on"+end_date+" end time" +end_time);
+  		  
+  		  
+  		 System.out.println("\n\n\n");
+  		 
+  		 		 
+  		 
+        }
+        Application.rs=Application.stmt.executeQuery("select employee.emp_name,servicereln.license_no,servicereln.service_id,maintenance.maintenance_id,timeslot.mechanic_id,timeslot.service_date,timeslot.service_time,timeslot.end_date,timeslot.end_time from employee, mechanic,maintenance,servicereln,timeslot where servicereln.customer_id='"+id+"' AND timeslot.service_id=servicereln.service_id AND servicereln.service_id = maintenance.service_id AND timeslot.mechanic_id=mechanic.mechanic_id AND mechanic.emp_id=employee.emp_id");
+  		 while(Application.rs.next())
+  		 {String mechanic_name1 = Application.rs.getString("emp_name");
+		    String license1 = Application.rs.getString("license_no");
+		    String service_id1 = Application.rs.getString("service_id");
+		    String maintenance_id1 = Application.rs.getString("maintenance_id");
+		    String mechanic_id1 = Application.rs.getString("mechanic_id");
+		    Date start_date1 = Application.rs.getDate("service_date");
+		    String start_time1=Application.rs.getString("service_time");
+		    Date end_date1=Application.rs.getDate("end_date");
+		    String end_time1=Application.rs.getString("end_time");
+		  System.out.println("The Customer ID is:" +id);
+		    System.out.println("The Service ID for the service is:" +service_id1);
+		  System.out.println("The License Plate for the car in this service is:" +license1);
+		  System.out.println("The Service Type involved in this Service is Maintenance");
+		  System.out.println("The Mechanic Involved in this service is: " +mechanic_name1);
+		  System.out.println("This Service Started on: "+start_date1);
+		  System.out.println("Start Time:"+start_time1);
+		 
+		  
+		  if(end_time1== null || end_time1.isEmpty())
+		  {
+			  System.out.println(" The Status of this Service is still ongoing");
+		  }
+		  else
+			  System.out.println("This service is completed and ended on"+end_date1+" end time" +end_time1);
+		  
+		  
+		 System.out.println("\n\n\n");
+  			 
+  		 }
+  		 
+  		 
+  		 
+  		    
+        
+        
         System.out.println("\nMENU:");
         System.out.println("\t1. Go Back");
         System.out.println("Enter option: ");
@@ -756,5 +835,13 @@ public class Customer extends User {
     private void displayCompletedServiceDetails() throws Exception {
 
     }
-
+    static void close(ResultSet rs) {
+        if(rs != null) {
+            try { rs.close(); } catch(Throwable whatever) {}
+        }
+}  static void close(Statement st) {
+    if(st != null) {
+        try { st.close(); } catch(Throwable whatever) {}
+    }
+}
 }
