@@ -129,16 +129,54 @@ public class Employee extends User {
     		updateProfile();
     	}
     	}
-    	if(field==2) {
+    	if(field==2) { if(newValue == null || newValue.isEmpty()) {
+            System.out.println("Address cannot be empty.");}
+    	{Application.stmt.executeUpdate("update employee set addr='"+newValue+"' where emp_id="+id);
+    		System.out.println("Profile Details Successfully Updated");
+    	
+    	}
+    	}
+    	if (field==3) { if (validateEmail(newValue))
+    	{ if(newValue == null || newValue.isEmpty()) {
+            System.out.println("Email cannot be empty.");
+    	    }
+    		Application.stmt.executeUpdate("update employee set email='"+newValue+"' where emp_id="+id);
+    		System.out.println("Profile Details Successfully Updated");
+    	}else {
+    		System.out.println("Invalid Data");
+    	}
+    		
+    	}
+    	if(field==4) {if(validatePhone(newValue))
+    	{
+    		Application.stmt.executeUpdate("update employee set phone='"+newValue+"' where emp_id="+id);
+    		System.out.println("Profile Details Successfully Updated");
+    	}
+    	else {
+    		System.out.println("Invalid Data");
+    	}
+    		
+    	}
+    	if(field==5) {if(newValue.length()<8) {
+    		System.out.println("Password cannot be less than 8 characters");
+        	} else {Application.stmt.executeUpdate("update login set password='"+newValue+"' where id="+id);
+        	System.out.println("Profile Details Updated");
+        		
+        	}
     		
     	}
     	
+    	
+    }
+    public static boolean validatePhone(String phone)
+    {
+    	return Pattern.matches("\\d{3}-\\d{3}-\\d{4}",phone);
+    }
+    public static boolean validateEmail(String email)
+    {
+    	return Pattern.matches("^([_a-zA-Z0-9-]+(\\.[_a-zA-Z0-9-]+)*@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*(\\.[a-zA-Z]{1,6}))?$",email);
     }
     
-    public static boolean validateAddress(String address)
-    {
-    	return address.matches("\\d+\\s+([a-zA-Z]+|[a-zA-Z]+\\s[a-zA-Z]+)");
-    }
     public static boolean isWord(String in)
     {
     	return Pattern.matches("[a-zA-z]+", in);
