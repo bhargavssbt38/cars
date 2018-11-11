@@ -293,8 +293,9 @@ public class Customer extends User {
     		 if(isWord(newValue))
     		
     	 {Application.stmt.executeUpdate("update customer set customer_name='"+newValue+"' where customer_id="+id);
-    		System.out.println("Profile Details Successfully updated");
-    	 }
+    		System.out.println("Profile Details Successfully updated into the database");
+    	    
+    	  }
     	else {
     		System.out.println("Invalid Data");
     		updateProfile();
