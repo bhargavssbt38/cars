@@ -70,20 +70,21 @@ public class Customer extends User {
 
     private void registerCarMenu() throws Exception {
         System.out.println("\nREGISTER CAR:");
+        scanner.nextLine();
         System.out.println("A. Enter license plate: ");
-        String licensePlate = scanner.next();
+        String licensePlate = scanner.nextLine();
         System.out.println("B. Enter purchase date: ");
-        String purchaseDate = scanner.next();
+        String purchaseDate = scanner.nextLine();
         System.out.println("C. Enter make: ");
-        String make = scanner.next();
+        String make = scanner.nextLine();
         System.out.println("D. Enter model: ");
-        String model = scanner.next();
+        String model = scanner.nextLine();
         System.out.println("E. Enter year: ");
-        String year = scanner.next();
+        String year = scanner.nextLine();
         System.out.println("F. Enter current mileage: ");
-        String currentMileage = scanner.next();
+        String currentMileage = scanner.nextLine();
         System.out.println("G. Enter last service date: ");
-        String lastServiceDate = scanner.next();
+        String lastServiceDate = scanner.nextLine();
         System.out.println("\nMENU:");
         System.out.println("\t1. Register");
         System.out.println("\t2. Cancel");
@@ -229,10 +230,11 @@ public class Customer extends User {
         System.out.println("\t3. Go Back");
         System.out.println("Enter option: ");
         int option = scanner.nextInt();
+        scanner.nextLine();
         switch(option) {
             case 1:
                 System.out.println("Enter name: ");
-                String name = scanner.next();
+                String name = scanner.nextLine();
                 updated = updateValue(1, name);
                 if(updated) {
                     System.out.println("Name updated successfully");
@@ -243,7 +245,7 @@ public class Customer extends User {
                 break;
             case 2:
                 System.out.println("Enter address: ");
-                String address = scanner.next();
+                String address = scanner.nextLine();
                 updated = updateValue(2, address);
                 if(updated) {
                     System.out.println("Address updated successfully");
@@ -254,7 +256,7 @@ public class Customer extends User {
                 break;
             case 3:
                 System.out.println("Enter phone number: ");
-                String phoneNumber = scanner.next();
+                String phoneNumber = scanner.nextLine();
                 updated = updateValue(3, phoneNumber);
                 if(updated) {
                     System.out.println("Phone number updated successfully");
@@ -265,7 +267,7 @@ public class Customer extends User {
                 break;
             case 4:
                 System.out.println("Enter password: ");
-                String password = scanner.next();
+                String password = scanner.nextLine();
                 updated = updateValue(3, password);
                 if(updated) {
                     System.out.println("Password updated successfully");
@@ -328,12 +330,13 @@ public class Customer extends User {
     // Customer: Schedule Service
     private void scheduleService() throws Exception {
         System.out.println("\nSCHEDULE SERVICE:");
+        scanner.nextLine();
         System.out.println("A. Enter license plate: ");
-        String licensePlate = scanner.next();
+        String licensePlate = scanner.nextLine();
         System.out.println("B. Enter current mileage: ");
         int currentMileage = scanner.nextInt();
         System.out.println("C. Enter mechanic name: ");
-        String mechanicName = scanner.next();
+        String mechanicName = scanner.nextLine();
         if(validateScheduleServiceData(licensePlate, currentMileage, mechanicName)) {
             System.out.println("\nMENU:");
             System.out.println("\t1. Schedule Maintenance");
