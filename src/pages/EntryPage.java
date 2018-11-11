@@ -39,15 +39,15 @@ public class EntryPage {
     public static void signUpUser() throws Exception {
         System.out.println("\nSIGN UP");
         System.out.println("\tA. Enter email address: ");
-        String email = scanner.next();
+        String email = scanner.nextLine();
         System.out.println("\tB. Enter password: ");
-        String password = scanner.next();
+        String password = scanner.nextLine();
         System.out.println("\tC. Enter name: ");
-        String name = scanner.next();
+        String name = scanner.nextLine();
         System.out.println("\tD. Enter address: ");
-        String address = scanner.next();
+        String address = scanner.nextLine();
         System.out.println("\tE. Enter phone number: ");
-        String phoneNumber = scanner.next();
+        String phoneNumber = scanner.nextLine();
 
         boolean validData = validateSignUpDetails(email, password, name, address, phoneNumber);
         if(validData) {
@@ -98,21 +98,16 @@ public class EntryPage {
         try {
             // Inserting in customer table
             String query = "insert into customer(customer_id, email, customer_name, telephone_no, address) values(customer_id_sequence.nextval, '" + email + "', '" + name + "', '" + phoneNumber + "', '" + address + "')";
-            customerID = Application.stmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS);
+            Application.stmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS);
 
-            if(customerID > 0) {
-                // Inserting in login table
-                query = "insert into login(email, password, id) values('" + email + "', '" + password + "', '" + customerID + "')";
-                Application.stmt.executeUpdate(query);
-                insertSuccess = true;
-            } else {
-                insertSuccess = false;
-            }
-
+            // Inserting in login table
+            query = "insert into login(email, password, id) values('" + email + "', '" + password + "', customer_id_sequence.currval)";
+             Application.stmt.executeUpdate(query);
+             insertSuccess = true;
         } catch(Exception e) {
             insertSuccess = false;
-            // Find SQL exception type & print appropriate error message
-            // Example: Primary key violation
+            System.out.println("Error occurred during sign up. Please try again.");
+            System.out.println("Error: " + e.getMessage());
         }
 
         return insertSuccess;
@@ -163,6 +158,7 @@ public class EntryPage {
 
             if (!matcher.matches()) {
                 System.out.println("Invalid phone number. (Format: 919-111-1111)");
+                return false;
             }
         }
 
