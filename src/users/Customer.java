@@ -4,6 +4,7 @@ import app.*;
 import pages.*;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class Customer extends User {
 
@@ -203,6 +204,41 @@ public class Customer extends User {
     private void viewProfile() throws Exception {
         System.out.println("\nVIEW PROFILE:");
         // TODO: display customer details
+        String id=Application.currentUser.userID;
+        Application.rs = Application.stmt.executeQuery("select customer.customer_id,customer.customer_name,customer.email,customer.address,customer.telephone_no, car.license_no, car.car_make,car.car_model,car.car_year,car.customer_id, car.date_of_purchase,car.last_recorded_mileage,car.recent_service_date,recent_service_type from customer,car where customer.customer_id='"+id+"' AND customer.customer_id=car.customer_id");
+    	//String Query="select customer.customer_id,customer.customer_name,customer.email,customer.address,customer.telephone_no, car.license_no, car.car_make,car.car_model,car.car_year,car.customer_id, car.date_of_purchase,car.last_recorded_mileage,car.recent_service_date,recent_service_type from customer,car where customer.email='"+customerEmail +"' AND customer.customer_id=car.customer_id";
+    	//System.out.println(Query);
+    	while (Application.rs.next()) {
+		    int cid= Application.rs.getInt("customer_id");
+		    String name = Application.rs.getString("customer_name");
+		    String addr = Application.rs.getString("address");
+		    String phone = Application.rs.getString("telephone_no");
+		    String license_no = Application.rs.getString("license_no");
+		    String email= Application.rs.getString("email");
+		    String car_make = Application.rs.getString("car_make");
+		    String car_year = Application.rs.getString("car_year");
+		    Date purchasedate=Application.rs.getDate("date_of_purchase");
+		    String car_model = Application.rs.getString("car_model");
+		    int mileage = Application.rs.getInt("last_recorded_mileage");
+		    Date latest_service_date = Application.rs.getDate("recent_service_date");
+		    String recent_service_type = Application.rs.getString("recent_service_type");
+		    
+		    
+		    System.out.println("Customer ID: "+cid);
+		    System.out.println("Customer Name: " +name);
+		    System.out.println("Address: " +addr);
+		    System.out.println("Phone: " +phone);
+		    System.out.println("email: " +email);
+		    System.out.println("\n\nCar Details");
+		    System.out.println("license no: " +license_no);
+		    System.out.println("Car_Make:  " +car_make);
+		    System.out.println("Car Year " +car_year);
+		    System.out.println("Purchase Date:" +purchasedate);
+		    System.out.println("Car Model: " +car_model);
+		    System.out.println("Last recorder mileage: " +mileage);
+		    System.out.println("latest_service_date: " +latest_service_date);
+		    System.out.println("Recent Service Type: " +recent_service_type);
+    	}
         System.out.println("\nMENU:");
         System.out.println("\t1. Go Back");
         System.out.println("Enter option: ");
@@ -215,80 +251,105 @@ public class Customer extends User {
                 System.out.println("Invalid option");
                 break;
         }
+    	
     }
 
     // TODO: in all error messages for updating fields enter the rules
     // Example: Name should be 5 chars min, Phone number should only be numbers, etc.
     private void updateProfile() throws Exception {
-        boolean updated = false;
+          	
         System.out.println("\nUPDATE PROFILE:");
         System.out.println("\t1. Name");
         System.out.println("\t2. Address");
         System.out.println("\t3. Phone Number");
         System.out.println("\t4. Password");
-        System.out.println("\t3. Go Back");
+        System.out.println("\t5. Go Back");
         System.out.println("Enter option: ");
         int option = scanner.nextInt();
-        switch(option) {
-            case 1:
-                System.out.println("Enter name: ");
-                String name = scanner.next();
-                updated = updateValue(1, name);
-                if(updated) {
-                    System.out.println("Name updated successfully");
-                } else {
-                    System.out.println("Error updating name");
-                }
-                updateProfile();
-                break;
-            case 2:
-                System.out.println("Enter address: ");
-                String address = scanner.next();
-                updated = updateValue(2, address);
-                if(updated) {
-                    System.out.println("Address updated successfully");
-                } else {
-                    System.out.println("Error updating address");
-                }
-                updateProfile();
-                break;
-            case 3:
-                System.out.println("Enter phone number: ");
-                String phoneNumber = scanner.next();
-                updated = updateValue(3, phoneNumber);
-                if(updated) {
-                    System.out.println("Phone number updated successfully");
-                } else {
-                    System.out.println("Error updating phone number");
-                }
-                updateProfile();
-                break;
-            case 4:
-                System.out.println("Enter password: ");
-                String password = scanner.next();
-                updated = updateValue(3, password);
-                if(updated) {
-                    System.out.println("Password updated successfully");
-                } else {
-                    System.out.println("Error updating password");
-                }
-                updateProfile();
-                break;
-            case 5:
-                profileMenu();
-                break;
-            default:
-                System.out.println("Invalid option");
-                break;
+        if(option >= 1 && option <= 4) {
+            System.out.println("Enter new value: ");
+            String newValue = scanner.next();
+            updateProfileField(option, newValue);
+            profileMenu();
+        } else if(option == 5) {
+            profileMenu();
+        } else {
+            System.out.println("Invalid option. Try again.");
+            updateProfile();
         }
+               
+        }
+    private void updateProfileField(int field, String newValue) throws Exception {
+        // TODO: validate value based on field type
+        // TODO: update in db
+    	String id=Application.currentUser.userID;
+    	if(field==1)
+    	{ if(newValue.length()<5)
+    		{ System.out.println("Name should be atleast 5 characters");
+    		  updateProfile();
+    		}
+    		 
+    	   else {
+    		 if(isWord(newValue))
+    		
+    	 {Application.stmt.executeUpdate("update customer set customer_name='"+newValue+"' where customer_id="+id);
+    		System.out.println("Profile Details Successfully updated");
+    	 }
+    	else {
+    		System.out.println("Invalid Data");
+    		updateProfile();
+    	}
+    	   }
+    	}
+    	
+    	if(field==2) { if(newValue == null || newValue.isEmpty()) {
+            System.out.println("Address cannot be empty.");}
+    	{Application.stmt.executeUpdate("update customer set address='"+newValue+"' where customer_id="+id);
+    		System.out.println("Profile Details Successfully Updated");
+    	
+    	}
+    	}
+    	
+    	if(field==3) {if(validatePhone(newValue))
+    	{
+    		Application.stmt.executeUpdate("update customer set telephone_no='"+newValue+"' where customer_id="+id);
+    		System.out.println("Profile Details Successfully Updated");
+    	}
+    	else {
+    		System.out.println("Invalid Data");
+    	}
+    		
+    	}
+    	if(field==4) {if(newValue.length()<8) {
+    		System.out.println("Password cannot be less than 8 characters");
+        	} else {Application.stmt.executeUpdate("update login set password='"+newValue+"' where id="+id);
+        	System.out.println("Profile Details Updated");
+        		
+        	}
+    		
+    	}
+    	}
+    	
+    	
+    
+    public static boolean validatePhone(String phone)
+    {
+    	return Pattern.matches("\\d{3}-\\d{3}-\\d{4}",phone);
+    }
+    public static boolean validateEmail(String email)
+    {
+    	return Pattern.matches("^([_a-zA-Z0-9-]+(\\.[_a-zA-Z0-9-]+)*@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*(\\.[a-zA-Z]{1,6}))?$",email);
+    }
+    
+    public static boolean isWord(String in)
+    {
+    	return Pattern.matches("[a-zA-z]+", in);
     }
 
-    // TODO: write update query to update appropriate field with value in db & return true if update is success
-    private boolean updateValue(int field, String value) throws Exception {
-        boolean updated = false;
+    
+    
 
-        return updated;
-    }
+    
 
     // TODO: validate all data
     // All fields mandatory except lastServiceDate; make lastServiceDate NULL if not entered
