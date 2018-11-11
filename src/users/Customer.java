@@ -70,47 +70,86 @@ public class Customer extends User {
     }
 
     private void registerCarMenu() throws Exception {
-        System.out.println("\nREGISTER CAR:");
+    	String id=Application.currentUser.userID;
+    	System.out.println("\nREGISTER CAR:");
+        String a=scanner.nextLine();
         System.out.println("A. Enter license plate: ");
-        String licensePlate = scanner.next();
+        String licensePlate = scanner.nextLine();
         System.out.println("B. Enter purchase date: ");
-        String purchaseDate = scanner.next();
+        String purchaseDate = scanner.nextLine();
         System.out.println("C. Enter make: ");
-        String make = scanner.next();
+        String make = scanner.nextLine();
         System.out.println("D. Enter model: ");
-        String model = scanner.next();
+        String model = scanner.nextLine();
         System.out.println("E. Enter year: ");
-        String year = scanner.next();
+        String year = scanner.nextLine();
         System.out.println("F. Enter current mileage: ");
-        String currentMileage = scanner.next();
+        String currentMileage = scanner.nextLine();
         System.out.println("G. Enter last service date: ");
-        String lastServiceDate = scanner.next();
+        String lastServiceDate = scanner.nextLine();
+        System.out.println("Enter the recent service type");
+        String recent_service_type=scanner.nextLine();
         System.out.println("\nMENU:");
         System.out.println("\t1. Register");
         System.out.println("\t2. Cancel");
         System.out.println("Enter option: ");
         int option = scanner.nextInt();
-        switch(option) {
-            case 1:
-                if(validateRegisterCarData(licensePlate, purchaseDate, make, model, year, currentMileage, lastServiceDate)) {
-                    boolean registered = registerCar(licensePlate, purchaseDate, make, model, year, currentMileage, lastServiceDate);
-                    if(registered) {
-                        System.out.println("Car registered successfully");
-                    }
-                    landingPage();
-                } else {
-                    System.out.println("Invalid data entered. All fields except last service date are required. Please try again.");
-                    registerCarMenu();
-                }
-                break;
-            case 2:
-                landingPage();
-                break;
-            default:
-                System.out.println("Invalid option");
-                break;
+        switch(option)
+        {
+        case 1: if(validatelicenseplate(licensePlate))
+               {if(licensePlate == null || licensePlate.length()==0||licensePlate.isEmpty()) {
+                   System.out.println("license cannot be empty."); registerCarMenu();
+       	              }
+                  licensePlate=licensePlate;
+                 } else {
+                	 System.out.println("Invalid License plate format, Please enter Correct information"); registerCarMenu(); 
+                 }
+              if(purchaseDate==null || purchaseDate.isEmpty())
+              {
+            	  System.out.println("Purchase Date cannot be Empty"); registerCarMenu();
+            	   }
+              if (make==null || make.isEmpty())
+              {
+            	  System.out.println("Make Cannot be Empty"); registerCarMenu();
+            	  
+              }
+              if(make.equalsIgnoreCase("Honda")|| make.equalsIgnoreCase("Toyota")||make.equalsIgnoreCase("Nissan"))
+              {
+            	  make=make;
+              }
+              else
+              {System.out.println("Make of the car needs to be either Honda or Toyota or Nissan");
+              
+              }
+              if(model==null||model.isEmpty())
+              { System.out.println("Model Cannot be Empty"); registerCarMenu();
+              
+              }
+              if(year==null||year.isEmpty())
+              {
+            	  System.out.println("Year Cannot be Empty"); registerCarMenu();
+              }
+              if(currentMileage==null||currentMileage.isEmpty())
+              {
+            	  System.out.println("Current Mileage Cannot be Empty");
+              }
+              
+             int  mileage=Integer.parseInt(currentMileage);
+             Application.stmt.executeUpdate("INSERT INTO \"ARAVICH7\".\"CAR\" (LICENSE_NO, CAR_MAKE, CAR_MODEL, CAR_YEAR, DATE_OF_PURCHASE, LAST_RECORDED_MILEAGE, RECENT_SERVICE_TYPE, Recent_Service_Date, CUSTOMER_ID) VALUES ('"+licensePlate+"', '"+make+"', '"+model+"', '"+year+"',TO_DATE('"+purchaseDate+"', 'YYYY-MM-DD HH24:MI:SS'), '"+mileage+"', '"+recent_service_type+"', '"+lastServiceDate+"','"+id+"')");
+        	 System.out.println("Car Registered Successfully");  
+             landingPage(); break;
+        case 2: landingPage(); break;
+        default: System.out.println("Invalid Option"); landingPage(); break;
+        
         }
+       
+        }
+    
+    public static boolean validatelicenseplate(String license)
+    {
+    	return Pattern.matches("[A-Z]{1,2}-[0-9]{1,4}",license);
     }
+    
 
     // Customer: Service
     private void serviceMenu() throws Exception {
@@ -352,20 +391,6 @@ public class Customer extends User {
 
     
 
-    // TODO: validate all data
-    // All fields mandatory except lastServiceDate; make lastServiceDate NULL if not entered
-    private boolean validateRegisterCarData(String licensePlate, String purchaseDate, String make, String model, String year, String currentMileage, String lastServiceDate) throws Exception {
-        boolean valid = false;
-
-        return valid;
-    }
-
-    // TODO: write update query to register car. Display error message if not registered.
-    private boolean registerCar(String licensePlate, String purchaseDate, String make, String model, String year, String currentMileage, String lastServiceDate) throws Exception {
-        boolean registered = false;
-
-        return registered;
-    }
 
     // Customer: View Service History
     // TODO: Section - Customer: View Service History
