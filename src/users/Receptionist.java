@@ -3,6 +3,7 @@ package users;
 import app.Application;
 import pages.DisplayPage;
 
+import java.sql.ResultSet;
 import java.util.*;
 
 public class Receptionist extends Employee {
@@ -81,6 +82,8 @@ public class Receptionist extends Employee {
         String year=scanner.next();
         System.out.println("\n Enter the Current Mileage");
         int currentmileage=scanner.nextInt();
+        System.out.println("\n Enter the Last Service Type");
+        String lastservicetype=scanner.next();
         System.out.println("\n Enter the Last Service Date");
         String lastservicedate=scanner.next();
         System.out.println("\n \n \n \nMENU:");
@@ -90,9 +93,10 @@ public class Receptionist extends Employee {
         int option = scanner.nextInt();
         switch(option) {
         case 1:
-            if(validateRegisterCarData(email,licenseplate, Pdate, make,model,year,currentmileage,lastservicedate)) {
-                boolean registered = registerCar(email,licenseplate, Pdate, make, model, year, currentmileage, lastservicedate);
-                if(registered) {
+            if(validateRegisterCarData(email,licenseplate, Pdate, make,model,year,currentmileage,lastservicedate,lastservicetype)) {
+                int registered = registerCar(email,licenseplate, Pdate, make, model, year, currentmileage, lastservicedate,lastservicetype);
+                
+                if(registered > 0) {
                     System.out.println("Car registered successfully");
                 }
                 landingPage();
@@ -118,7 +122,8 @@ public class Receptionist extends Employee {
        DisplayDetails(email);
       }
       else {
-    	  System.out.println("Enter valid Email address"); serviceHistory();
+    	  System.out.println("Enter valid Email address"); 
+    	  serviceHistory();
       }
       System.out.println("\n \n Menu");
       System.out.println("1. Go Back");
@@ -334,13 +339,47 @@ public class Receptionist extends Employee {
  // TODO: Run a task to update the counts of parts to be used that day, basically adjusted to reflect the fact the parts will be removed and actually used that day.   
     private void updateInventory() throws Exception {
     	System.out.println("Running Update Inventory Task");
-    	System.out.println("Status of the task: Success/Fail");
+    	System.out.println("Enter date :");
+    	String date = scanner.next();
+    	HashMap<String, Integer> parts = new HashMap<>();
+    	int result  = 0;
+    	Application.rs = Application.stmt.executeQuery("SELECT r.part_id,r.quantity from requires r,timeslot t where r.service_id = t.service_id and t.service_date = TO_DATE('"+date+"','MM-DD-YYYY')");
+		while (Application.rs.next()) {
+		    String s = Application.rs.getString("part_id");
+		    int qty = Application.rs.getInt("quantity");
+		    if (parts.containsKey(s))  
+	        { 
+	            Integer a = parts.get(s); 
+	            parts.put(s,a+qty);
+	        }
+		    else
+		    	parts.put(s, qty);
+		}
+		System.out.println(parts);
+		for(String key : parts.keySet())
+		{
+			Application.rs = Application.stmt.executeQuery("SELECT current_qty FROM inventory WHERE part_id = "+key);
+			while(Application.rs.next())
+			{
+				int current_qty = Application.rs.getInt("current_qty");
+				result = Application.stmt.executeUpdate("UPDATE inventory SET current_qty = "+String.valueOf(current_qty - parts.get(key))+" WHERE part_id = "+key);
+			
+			}
+			if(result > 0)
+				System.out.println("Status of the task: Success");
+			
+		}
+    	
+    	
+    	
     	System.out.println("\nMenu");
     	System.out.println("1. Go back");
     	int choice=scanner.nextInt();
     	switch(choice) {
-    	case 1: landingPage(); break;
-    	default: System.out.println("Invalid Option"); System.exit(0);
+    	case 1: landingPage(); 
+    			break;
+    	default: System.out.println("Invalid Option"); 
+    			 System.exit(0);
     	}
 
     }
@@ -353,38 +392,45 @@ public class Receptionist extends Employee {
     	int option=scanner.nextInt();
     	switch(option) {
     	case 1: System.out.println("Enter the how many order IDs that needs to be marked as delivered" );
-    	        int count=scanner.nextInt();
+    	        int count=scanner.nextInt(),completed = 0;
     	        int orderids[]=new int[count];
     	        System.out.println(" Now provide the order IDs");
     	        for(int i=0;i<count;i++)
     	        {
-    	        	orderids[count]=scanner.nextInt();
+    	        	orderids[i]=scanner.nextInt();
+    	        	System.out.println("UPDATE orders SET order_status = 'Completed' WHERE order_id = '"+orderids[i]+"'");
+    	        	completed = Application.stmt.executeUpdate("UPDATE orders SET order_status = 'Completed' WHERE order_id = '"+orderids[i]+"'");
     	        }
     	        System.out.println("Running the task to update the pending orders");
-    	        System.out.println("Status of the task: Success/Fail"); break;
-    	case 2: landingPage();break;
-    	default: System.out.println("Invalid option");System.exit(0);
+    	        if(completed > 0)
+    	        	System.out.println("Status of the task: Success"); 
+    	        break;
+    	case 2: landingPage();
+    			break;
+    	default: System.out.println("Invalid option");
+    			 System.exit(0);
     	
     	   
     	}
     	}
     //Validate the register data from the receptionist
-    private boolean validateRegisterCarData(String email, String licenseplate, String Pdate, String make, String model,String year, int currentMileage, String lastServiceDate) throws Exception {
-        boolean valid = false;
+    private boolean validateRegisterCarData(String email, String licenseplate, String Pdate, String make, String model,String year, int currentMileage, String lastServiceDate, String lastservicetype) throws Exception {
+        boolean valid = true;
 
         return valid;
     }
     //TODO: Register the car into the database
-    private boolean registerCar(String email,String licenseplate, String Pdate, String make, String model, String year, int currentMileage, String lastServiceDate) throws Exception {
-        boolean registered = false;
-
+    private int registerCar(String email,String licenseplate, String Pdate, String make, String model, String year, int currentMileage, String lastServiceDate, String lastservicetype) throws Exception {
+        int registered = 0;
+        System.out.println("INSERT INTO CAR (LICENSE_NO,CAR_MAKE,CAR_MODEL,CAR_YEAR,DATE_OF_PURCHASE,LAST_RECORDED_MILEAGE,RECENT_SERVICE_TYPE,RECENT_SERVICE_DATE) " + "VALUES ('"+licenseplate+"','"+make+"','"+model+"','"+year+"',TO_DATE('"+Pdate+"','MM-DD-YYYY'),"+currentMileage+",'"+lastservicetype+"',TO_DATE('"+lastServiceDate+"','MM-DD-YYYY'));");
+        registered = Application.stmt.executeUpdate("INSERT INTO CAR (LICENSE_NO,CAR_MAKE,CAR_MODEL,CAR_YEAR,DATE_OF_PURCHASE,LAST_RECORDED_MILEAGE,RECENT_SERVICE_TYPE,RECENT_SERVICE_DATE) " + "VALUES ('"+licenseplate+"','"+make+"','"+model+"','"+year+"',TO_DATE('"+Pdate+"','MM-DD-YYYY'),"+currentMileage+",'"+lastservicetype+"',TO_DATE('"+lastServiceDate+"','MM-DD-YYYY'))");
         return registered;
     }
-    //TODO Display details of Service history of the customer based on the email-address.
+    //TODO Display details of Service history of the customer based on the email-address
     private boolean DisplayDetails(String email) throws Exception {
     	boolean valid =false;
     	
-     return valid;
+    	return valid;
       }
     // TODO Validate email of the user
     private boolean validateemail(String email) throws Exception{
