@@ -471,12 +471,7 @@ public class Customer extends User {
 		 System.out.println("\n\n\n");
   			 
   		 }
-  		 
-  		 
-  		 
-  		    
-        
-        
+  		       
         System.out.println("\nMENU:");
         System.out.println("\t1. Go Back");
         System.out.println("Enter option: ");
@@ -833,6 +828,55 @@ public class Customer extends User {
     //F. Mechanic Name
     //G. Total Service Cost
     private void displayCompletedServiceDetails() throws Exception {
+    	String id=Application.currentUser.userID;
+        Application.rs=Application.stmt.executeQuery("select employee.emp_name,servicereln.license_no,servicereln.service_id,requires.quantity,repair.actual_fees,repair.diagnostic_fees,repair.repair_id,timeslot.mechanic_id,timeslot.service_date,timeslot.service_time,timeslot.end_date,timeslot.end_time,requires.part_id,parts.price,parts.warranty from parts,employee,repair, requires,servicereln,timeslot,mechanic where servicereln.customer_id='"+id+"' AND timeslot.service_id=servicereln.service_id AND servicereln.service_id = repair.service_id AND timeslot.mechanic_id= mechanic.mechanic_id AND mechanic.emp_id=employee.emp_id AND servicereln.service_id=requires.service_id AND requires.part_id=parts.part_id");
+        
+        System.out.println("The customer Invoice History:");
+        
+        
+        while (Application.rs.next()) {
+        
+        	String mechanic_name = Application.rs.getString("emp_name");
+  		    String license = Application.rs.getString("license_no");
+  		    String service_id = Application.rs.getString("service_id");
+  		    float actual_fees = Application.rs.getFloat("actual_fees");
+  		    float diagonstic_fees = Application.rs.getFloat("diagnostic_fees");
+  		    float parts_price=Application.rs.getFloat("price");
+  		    int warranty=Application.rs.getInt("warranty");
+  		    int quantity=Application.rs.getInt("quantity");
+  		    Date start_date = Application.rs.getDate("service_date");
+  		    String start_time=Application.rs.getString("service_time");
+  		    Date end_date=Application.rs.getDate("end_date");
+  		    String end_time=Application.rs.getString("end_time");
+  		    float total_fees=actual_fees+diagonstic_fees;
+  		    if(warranty==0)
+  		    {float parts_fees=quantity*parts_price;
+  		      total_fees=total_fees+parts_fees;
+  		    	  		    }
+  		  System.out.println("The Customer ID is:" +id);
+  		    System.out.println("The Service ID for the service is:" +service_id);
+  		  System.out.println("The License Plate for the car in this service is:" +license);
+  		  System.out.println("The Service Type involved in this Service is Repair");
+  		  System.out.println("The Mechanic Involved in this service is: " +mechanic_name);
+  		  System.out.println("This Service Started on: "+start_date);
+  		  System.out.println("Start Time:"+start_time);
+  		  if(end_time== null || end_time.isEmpty())
+		  {
+			  System.out.println(" The Status of this Service is still ongoing");
+		  }
+		  else
+		  {  System.out.println("This service is completed and ended on"+end_date+" end time" +end_time);
+  		      System.out.println("The Total fees involved in this service is "+total_fees);
+		  }
+		  
+		 System.out.println("\n\n\n");
+  		 
+  		  
+        }
+  		 
+    	
+    	
+    	
 
     }
     static void close(ResultSet rs) {
