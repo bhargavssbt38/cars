@@ -3,7 +3,9 @@ package pages;
 import app.*;
 import users.*;
 
+import java.sql.Statement;
 import java.util.*;
+import java.util.regex.*;
 
 public class EntryPage {
 
@@ -37,15 +39,15 @@ public class EntryPage {
     public static void signUpUser() throws Exception {
         System.out.println("\nSIGN UP");
         System.out.println("\tA. Enter email address: ");
-        String email = scanner.next();
+        String email = scanner.nextLine();
         System.out.println("\tB. Enter password: ");
-        String password = scanner.next();
+        String password = scanner.nextLine();
         System.out.println("\tC. Enter name: ");
-        String name = scanner.next();
+        String name = scanner.nextLine();
         System.out.println("\tD. Enter address: ");
-        String address = scanner.next();
+        String address = scanner.nextLine();
         System.out.println("\tE. Enter phone number: ");
-        String phoneNumber = scanner.next();
+        String phoneNumber = scanner.nextLine();
 
         boolean validData = validateSignUpDetails(email, password, name, address, phoneNumber);
         if(validData) {
@@ -54,10 +56,12 @@ public class EntryPage {
                 System.out.println("User account created. Login with same credentials.");
                 DisplayPage.loginPage();
             }
+        } else {
+            System.out.println("Try again.");
+            signUpUser();
         }
     }
 
-    // TODO: return "manager", "customer", "receptionist" based on userID by querying db; return null if invalid user
     private static String getUserType(String userID, String email) throws Exception {
         String userType = null;
 
@@ -89,29 +93,78 @@ public class EntryPage {
     }
 
     private static boolean saveUserToDB(String email, String password, String name, String address, String phoneNumber) {
-        // UNCOMMENT NEXT LINE
-        //boolean insertSuccess = false;
-        boolean insertSuccess = true; // RETURNING TRUE BY DEFAULT FOR TESTING - REMOVE LATER
+        boolean insertSuccess = false;
+        int customerID = 0;
         try {
-            // TODO: insert query to save user to db
+            // Inserting in customer table
+            String query = "insert into customer(customer_id, email, customer_name, telephone_no, address) values(customer_id_sequence.nextval, '" + email + "', '" + name + "', '" + phoneNumber + "', '" + address + "')";
+            Application.stmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS);
+
+            // Inserting in login table
+            query = "insert into login(email, password, id) values('" + email + "', '" + password + "', customer_id_sequence.currval)";
+             Application.stmt.executeUpdate(query);
+             insertSuccess = true;
         } catch(Exception e) {
             insertSuccess = false;
-            // Find SQL exception type & print appropriate error message
-            // Example: Primary key violation
+            System.out.println("Error occurred during sign up. Please try again.");
+            System.out.println("Error: " + e.getMessage());
         }
+
         return insertSuccess;
     }
 
-    // TODO: validate all fields
-    // Example: validate email format, minimum password length & special characters, valid phoneNumber, address & name
-    // Display appropriate error message if invalid & return false
-    // Return true if valid
     private static boolean validateSignUpDetails(String email, String password, String name, String address, String phoneNumber) throws Exception {
+        boolean valid = true;
 
-        return true;
+        if(email == null || email.isEmpty()) {
+            System.out.println("Email cannot be empty.");
+            return false;
+        } else {
+            String regex = "^([_a-zA-Z0-9-]+(\\.[_a-zA-Z0-9-]+)*@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*(\\.[a-zA-Z]{1,6}))?$";
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(email);
+            if (!matcher.matches()) {
+                System.out.println("Invalid email entered.");
+                return false;
+            }
+        }
+
+        if(password == null || password.isEmpty()) {
+            System.out.println("Password cannot be empty.");
+            return false;
+        } else {
+            if(password.length() < 8) {
+                System.out.println("Password has to be at least 8 characters long.");
+                return false;
+            }
+        }
+
+        if(name == null || name.isEmpty()) {
+            System.out.println("Name cannot be empty.");
+            return false;
+        }
+
+        if(address == null || address.isEmpty()) {
+            System.out.println("Address cannot be empty.");
+            return false;
+        }
+
+        if(phoneNumber == null || phoneNumber.isEmpty()) {
+            System.out.println("Phone number cannot be empty.");
+            return false;
+        } else {
+            Pattern pattern = Pattern.compile("\\d{3}-\\d{3}-\\d{4}");
+            Matcher matcher = pattern.matcher(phoneNumber);
+
+            if (!matcher.matches()) {
+                System.out.println("Invalid phone number. (Format: 919-111-1111)");
+                return false;
+            }
+        }
+
+        return valid;
     }
 
-    // TODO: query username password from db and validate credentials & return UserID
     private static String validateCredentials(String email, String password) throws Exception {
         String userID = null;
         String query = "select id from login where email = '" + email + "' and password = '" + password + "'";
