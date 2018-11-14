@@ -1,6 +1,7 @@
 package users;
 
 import app.*;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import pages.*;
 import java.sql.*;
 
@@ -506,9 +507,6 @@ public class Manager extends Employee {
         totCost = String.valueOf(Integer.parseInt(qty)*Integer.parseInt(unitPrice));
         getDetails = "select sc_id from placed_to where order_id = "+oid;
 
-//        System.out.println("sdfs");
-
-
 
         Application.rs = Application.stmt.executeQuery(getDetails);
         while(Application.rs.next())
@@ -617,13 +615,22 @@ public class Manager extends Employee {
         //c. Additional Parts
     private void saveNewCar(String make, String model, int year, double milesA, int monthsA, String partsA, double milesB, int monthsB, String partsB, double milesC, int monthsC, String partsC) throws Exception {
 
+        String createCar = "insert into service_type_lookup (lookup_id,car_make,car_model,car_year,service_a,service_b,service_c) values (";
+
+        int recCt = 0;
+        String q = "select count(*) from service_type_look";
+
+
     }
 
     // (For Manager: New Car Model)
     // TODO: validate new car models
     private boolean validateNewCar(String make, String model, int year, double milesA, int monthsA, String partsA, double milesB, int monthsB, String partsB, double milesC, int monthsC, String partsC) throws Exception {
         boolean valid = true;
-
+        if(milesA >= 0 && milesB >=0 && milesC >= 0 && year>1900 && year<2018 && monthsA >= 0 && monthsB >= 0 && monthsC >= 0)
+            ;
+        else
+            valid = false;
         return valid;
     }
 
@@ -657,7 +664,85 @@ public class Manager extends Employee {
         //a. Miles
         //b. List of Basic Services (Service ID)
     private void displayCarServiceDetails() throws Exception {
+        String dispQuery = "select car_make,car_model,car_year,service_a,service_b,service_c, b.basic_service_id, b.service_name, service_type from basic_services b, service_type_lookup sl, service_type_services sts where sl.lookup_id = sts.lookup_id and b.basic_service_id = sts.basic_service_id order by car_make,car_model,car_year" ;
+        Application.rs = Application.stmt.executeQuery(dispQuery);
+        HashMap<String, Integer> map = new HashMap<>();
+        Boolean f1=false,f2=false,f3=false;
+        String stype = "", make = "", model = "", year = "", amiles = "", aservices = "", bmiles = "", bservices = "", cmiles = "", cservices = "";
+        System.out.println(dispQuery);
+        while(Application.rs.next())
+        {
+            f1=false;
+            f2=false;
+            f3=false;
+            String make1 = Application.rs.getString("car_make");
+            if(!map.containsKey(make1))
+            {
+                make = make1;
+                map.put(make,1);
+                f1=true;
+            }
 
+            String model1 = Application.rs.getString("car_model");
+            if(!map.containsKey(model1))
+            {
+                model = model1;
+                map.put(model,1);
+                f2=true;
+            }
+
+            String year1 = Application.rs.getString("car_year");
+
+            if(!map.containsKey(year1))
+            {
+                year = year1;
+                map.put(year,1);
+                f3=true;
+            }
+
+            amiles = Application.rs.getString("service_a");
+            bmiles = Application.rs.getString("service_b");
+            cmiles = Application.rs.getString("service_c");
+            stype = Application.rs.getString("service_type");
+
+            if(stype.equalsIgnoreCase("a"))
+                aservices+= (Application.rs.getString("service_name") + ", ");
+            else if(stype.equalsIgnoreCase("b"))
+                bservices+= (Application.rs.getString("service_name") + ", ");
+            else if(stype.equalsIgnoreCase("c"))
+                cservices+= (Application.rs.getString("service_name") + ", ");
+            if(f1||f2||f3) {
+                System.out.println("\n\n1. Car make: " + make);
+                System.out.println("2. Car model: " + model);
+                System.out.println("3. Car year: " + year);
+                System.out.println("4. Service A details: ");
+                System.out.println("Miles: " + amiles);
+                System.out.println("Basic Services: " + aservices);
+                System.out.println("5. Service B details: ");
+                System.out.println("Miles: " + bmiles);
+                System.out.println("Basic Services: " + bservices);
+                System.out.println("6. Service C details: ");
+                System.out.println("Miles: " + cmiles);
+                System.out.println("Basic Services: " + cservices);
+                System.out.println("\n");
+                f1=false; f2=false; f3=false;
+            }
+        }
+        if(f1||f2||f3) {
+            System.out.println("\n\n1. Car make: " + make);
+            System.out.println("2. Car model: " + model);
+            System.out.println("3. Car year: " + year);
+            System.out.println("4. Service A details: ");
+            System.out.println("Miles: " + amiles);
+            System.out.println("Basic Services: " + aservices);
+            System.out.println("5. Service B details: ");
+            System.out.println("Miles: " + bmiles);
+            System.out.println("Basic Services: " + bservices);
+            System.out.println("6. Service C details: ");
+            System.out.println("Miles: " + cmiles);
+            System.out.println("Basic Services: " + cservices);
+            System.out.println("\n");
+        }
     }
 
     // Manager: Service History
@@ -686,10 +771,34 @@ public class Manager extends Employee {
     //G. Service End Date/Time (expected or actual)
     //H. Service Status (Pending, Ongoing, or Complete)
     private void displayServiceHistory() throws Exception {
-        String serviceHistoryQuery = "select sr.license_no, t.end_date, t.mechanic_id, s.service_id, t.service_date, t. service_time, e.emp_name as mechanic_name, c.customer_name \n" +
-                "from servicereln sr, mechanic m, services s, customer c, timeslot t, employee e\n" +
-                "where sr.service_id = s.service_id and c.customer_id = sr.customer_id and t.service_id = s.service_id and \n" +
-                "m.mechanic_id = t.mechanic_id and m.emp_id = e.emp_id";
+
+        String serviceHistoryQuery = "select sr.license_no, t.service_time, t.end_date, t.mechanic_id, s.service_id, t.service_date, t. service_time, e.emp_name as mechanic_name, c.customer_name from servicereln sr, mechanic m, services s, customer c, timeslot t, employee e where sr.service_id = s.service_id and c.customer_id = sr.customer_id and t.service_id = s.service_id and m.mechanic_id = t.mechanic_id and m.emp_id = e.emp_id";
+        String sid = "", cname = "", stype = "", mname = "", sdate = "", edate = "", status = "", lp = "";
+        Application.rs = Application.stmt.executeQuery(serviceHistoryQuery);
+        //System.out.println("sdfsd\n");
+        while(Application.rs.next())
+        {
+            sid = Application.rs.getString("service_id");
+            cname = Application.rs.getString("customer_name");
+            lp = Application.rs.getString("license_no");
+            //stype = Application.rs.getString("ser");
+            mname = Application.rs.getString("mechanic_name");
+            sdate = Application.rs.getString("service_date");
+            edate = Application.rs.getString("end_date");
+            status = "Completed";
+            if(edate == null)
+            { status = "Pending"; edate = "Still in progress - no end date yet"; }
+
+            System.out.println("SID : "+sid);
+            System.out.println("Customer Name : "+cname);
+            System.out.println("License plate of the car serviced : "+lp);
+            System.out.println("Mechanic name : "+mname);
+            System.out.println("Start Date : "+sdate);
+            System.out.println("End date : "+edate);
+            System.out.println("Service Status : "+status);
+            System.out.println("\n");
+        }
+
     }
 
 
@@ -723,7 +832,7 @@ public class Manager extends Employee {
     //K. Total Service Cost
     private void displayInvoices() throws Exception {
 
-        System.out.println("")
+        System.out.println("");
 
     }
 
