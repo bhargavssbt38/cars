@@ -150,9 +150,8 @@ public class Customer extends User {
     
     public static boolean validatelicenseplate(String license)
     {
-    	return Pattern.matches("[A-Z]{1,3}-[0-9]{1,4}",license);
-    }
-    
+    	return Pattern.matches("[A-Z]{1,3}-[A-Z][0-9]{1,4}",license);
+    }     
 
     // Customer: Service
     private void serviceMenu() throws Exception {
