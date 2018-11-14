@@ -136,7 +136,7 @@ public class Customer extends User {
               {
             	  System.out.println("Current Mileage Cannot be Empty");
               }
-              
+             
              int  mileage=Integer.parseInt(currentMileage);
              Application.stmt.executeUpdate("INSERT INTO \"ARAVICH7\".\"CAR\" (LICENSE_NO, CAR_MAKE, CAR_MODEL, CAR_YEAR, DATE_OF_PURCHASE, LAST_RECORDED_MILEAGE, RECENT_SERVICE_TYPE, Recent_Service_Date, CUSTOMER_ID) VALUES ('"+licensePlate+"', '"+make+"', '"+model+"', '"+year+"',TO_DATE('"+purchaseDate+"', 'YYYY-MM-DD HH24:MI:SS'), '"+mileage+"', '"+recent_service_type+"', '"+lastServiceDate+"','"+id+"')");
         	 System.out.println("Car Registered Successfully");  
@@ -150,7 +150,7 @@ public class Customer extends User {
     
     public static boolean validatelicenseplate(String license)
     {
-    	return Pattern.matches("[A-Z]{1,2}-[0-9]{1,4}",license);
+    	return Pattern.matches("[A-Z]{1,3}-[0-9]{1,4}",license);
     }
     
 
@@ -247,7 +247,7 @@ public class Customer extends User {
         System.out.println("\nVIEW PROFILE:");
         // TODO: display customer details
         String id=Application.currentUser.userID;
-        Application.rs = Application.stmt.executeQuery("select customer.customer_id,customer.customer_name,customer.email,customer.address,customer.telephone_no, car.license_no, car.car_make,car.car_model,car.car_year,car.customer_id, car.date_of_purchase,car.last_recorded_mileage,car.recent_service_date,recent_service_type from customer,car where customer.customer_id='"+id+"' AND customer.customer_id=car.customer_id");
+        Application.rs = Application.stmt.executeQuery("select customer.customer_id,customer.sc_id,customer.customer_name,customer.email,customer.address,customer.telephone_no, car.license_no, car.car_make,car.car_model,car.car_year,car.customer_id, car.date_of_purchase,car.last_recorded_mileage,car.recent_service_date,recent_service_type from customer,car where customer.customer_id='"+id+"' AND customer.customer_id=car.customer_id");
     	//String Query="select customer.customer_id,customer.customer_name,customer.email,customer.address,customer.telephone_no, car.license_no, car.car_make,car.car_model,car.car_year,car.customer_id, car.date_of_purchase,car.last_recorded_mileage,car.recent_service_date,recent_service_type from customer,car where customer.email='"+customerEmail +"' AND customer.customer_id=car.customer_id";
     	//System.out.println(Query);
     	while (Application.rs.next()) {
@@ -259,6 +259,7 @@ public class Customer extends User {
 		    String email= Application.rs.getString("email");
 		    String car_make = Application.rs.getString("car_make");
 		    String car_year = Application.rs.getString("car_year");
+		    String sc_id= Application.rs.getString("sc_id");
 		    Date purchasedate=Application.rs.getDate("date_of_purchase");
 		    String car_model = Application.rs.getString("car_model");
 		    int mileage = Application.rs.getInt("last_recorded_mileage");
@@ -267,6 +268,7 @@ public class Customer extends User {
 		    
 		    
 		    System.out.println("Customer ID: "+cid);
+		    System.out.println("The Customer is registered with the service center:" +sc_id);
 		    System.out.println("Customer Name: " +name);
 		    System.out.println("Address: " +addr);
 		    System.out.println("Phone: " +phone);
