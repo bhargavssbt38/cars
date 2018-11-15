@@ -832,7 +832,51 @@ public class Manager extends Employee {
     //K. Total Service Cost
     private void displayInvoices() throws Exception {
 
-        System.out.println("");
+        String invoiceQuery = "select s.service_id, c.customer_name, service_date, end_date, license_no, e.emp_name, p.part_name, p.price, labor_charge, estimated_hours from services s,customer c, timeslot t, servicereln sr, employee e, requires r, mechanic m, parts p where s.service_id = r.service_id and p.part_id = r.part_id and sr.service_id = s.service_id and sr.customer_id = c.customer_id and t.service_id = s.service_id and m.mechanic_id = t.mechanic_id and e.emp_id = m.emp_id order by s.service_id";
+        String sid = "", cname = "", sdate = "", edate = "", lno = "", stype = "", mname = "", p="", cost="", hrs = "", scost = "";
+        Application.rs = Application.stmt.executeQuery(invoiceQuery);
+        String flag = "";
+
+        while(Application.rs.next())
+        {
+            sid = Application.rs.getString("service_id");
+            cname = Application.rs.getString("customer_name");
+            sdate = Application.rs.getString("service_date");
+            edate = Application.rs.getString("end_date");
+
+            if(Application.rs.wasNull())
+                edate = "Still in progress";
+            lno = Application.rs.getString("license_no");
+            mname = Application.rs.getString("emp_name");
+            p = Application.rs.getString("part_name");
+            cost = Application.rs.getString("price");
+            hrs = Application.rs.getString("estimated_hours");
+            scost = Application.rs.getString("labor_charge");
+
+            Float totalCost = Float.parseFloat(hrs) * Float.parseFloat(scost);
+
+
+            if(sid.equalsIgnoreCase(flag))
+            {
+                System.out.println("Part name: " + p + " Cost: "+cost);
+            }
+            else
+            {
+                flag = sid;
+                System.out.println("Service id: "+sid);
+                System.out.println("Customer name: "+cname);
+                System.out.println("Start Date: "+sdate);
+                System.out.println("End Date: "+edate);
+                System.out.println("Car License No: "+lno);
+                System.out.println("Mechanic Name: "+mname);
+                System.out.println("Labor hours: "+hrs);
+                System.out.println("Charge per hour: "+scost);
+                System.out.println("Total Labor Charge: "+totalCost);
+                System.out.println("Parts Required:-");
+                System.out.println("Part name: " + p + " Cost: "+cost);
+            }
+
+        }
 
     }
 
