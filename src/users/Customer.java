@@ -5,7 +5,11 @@ import pages.*;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.*;
+import java.util.Calendar;
+import java.util.regex.Pattern;
 
 public class Customer extends User {
 
@@ -13,6 +17,8 @@ public class Customer extends User {
     static DateFormat dateFormat = new SimpleDateFormat("dd-MMM-yy");
     static Date lastDay = new Date();
 
+    public static ResultSet rs2 = null;
+    public static Statement stmt2 = null;
     public Customer(String userID) {
         super(userID, "customer");
     }
@@ -73,8 +79,9 @@ public class Customer extends User {
     }
 
     private void registerCarMenu() throws Exception {
-        System.out.println("\nREGISTER CAR:");
-        scanner.nextLine();
+    	String id=Application.currentUser.userID;
+    	System.out.println("\nREGISTER CAR:");
+        String a=scanner.nextLine();
         System.out.println("A. Enter license plate: ");
         String licensePlate = scanner.nextLine();
         System.out.println("B. Enter purchase date: ");
@@ -89,32 +96,68 @@ public class Customer extends User {
         String currentMileage = scanner.nextLine();
         System.out.println("G. Enter last service date: ");
         String lastServiceDate = scanner.nextLine();
+        System.out.println("Enter the recent service type");
+        String recent_service_type=scanner.nextLine();
         System.out.println("\nMENU:");
         System.out.println("\t1. Register");
         System.out.println("\t2. Cancel");
         System.out.println("Enter option: ");
         int option = scanner.nextInt();
-        switch(option) {
-            case 1:
-                if(validateRegisterCarData(licensePlate, purchaseDate, make, model, year, currentMileage, lastServiceDate)) {
-                    boolean registered = registerCar(licensePlate, purchaseDate, make, model, year, currentMileage, lastServiceDate);
-                    if(registered) {
-                        System.out.println("Car registered successfully");
-                    }
-                    landingPage();
-                } else {
-                    System.out.println("Invalid data entered. All fields except last service date are required. Please try again.");
-                    registerCarMenu();
-                }
-                break;
-            case 2:
-                landingPage();
-                break;
-            default:
-                System.out.println("Invalid option");
-                break;
+        switch(option)
+        {
+        case 1: if(validatelicenseplate(licensePlate))
+               {if(licensePlate == null || licensePlate.length()==0||licensePlate.isEmpty()) {
+                   System.out.println("license cannot be empty."); registerCarMenu();
+       	              }
+                  licensePlate=licensePlate;
+                 } else {
+                	 System.out.println("Invalid License plate format, Please enter Correct information"); registerCarMenu(); 
+                 }
+              if(purchaseDate==null || purchaseDate.isEmpty())
+              {
+            	  System.out.println("Purchase Date cannot be Empty"); registerCarMenu();
+            	   }
+              if (make==null || make.isEmpty())
+              {
+            	  System.out.println("Make Cannot be Empty"); registerCarMenu();
+            	  
+              }
+              if(make.equalsIgnoreCase("Honda")|| make.equalsIgnoreCase("Toyota")||make.equalsIgnoreCase("Nissan"))
+              {
+            	  make=make;
+              }
+              else
+              {System.out.println("Make of the car needs to be either Honda or Toyota or Nissan");registerCarMenu();
+              
+              }
+              if(model==null||model.isEmpty())
+              { System.out.println("Model Cannot be Empty"); registerCarMenu();
+              
+              }
+              if(year==null||year.isEmpty())
+              {
+            	  System.out.println("Year Cannot be Empty"); registerCarMenu();
+              }
+              if(currentMileage==null||currentMileage.isEmpty())
+              {
+            	  System.out.println("Current Mileage Cannot be Empty");
+              }
+             
+             int  mileage=Integer.parseInt(currentMileage);
+             Application.stmt.executeUpdate("INSERT INTO \"ARAVICH7\".\"CAR\" (LICENSE_NO, CAR_MAKE, CAR_MODEL, CAR_YEAR, DATE_OF_PURCHASE, LAST_RECORDED_MILEAGE, RECENT_SERVICE_TYPE, Recent_Service_Date, CUSTOMER_ID) VALUES ('"+licensePlate+"', '"+make+"', '"+model+"', '"+year+"',TO_DATE('"+purchaseDate+"', 'YYYY-MM-DD HH24:MI:SS'), '"+mileage+"', '"+recent_service_type+"', '"+lastServiceDate+"','"+id+"')");
+        	 System.out.println("Car Registered Successfully");  
+             landingPage(); break;
+        case 2: landingPage(); break;
+        default: System.out.println("Invalid Option"); landingPage(); break;
+        
         }
-    }
+       
+        }
+    
+    public static boolean validatelicenseplate(String license)
+    {
+    	return Pattern.matches("[A-Z]{1,3}-[A-Z][0-9]{1,4}",license);
+    }     
 
     // Customer: Service
     private void serviceMenu() throws Exception {
@@ -170,7 +213,7 @@ public class Customer extends User {
     // Customer: View Invoice Details
     private void viewInvoiceDetails() throws Exception {
         System.out.println("\nVIEW INVOICE DETAILS:");
-        System.out.println("Enter service ID: ");
+        System.out.println("Enter service ID for services, which are complete ");
         int serviceID = scanner.nextInt();
         // TODO: display service details for this ID
         showServiceDetailsForID(serviceID);
@@ -201,13 +244,389 @@ public class Customer extends User {
     //I. Labor wages per hour
     //J. Total Service Cost
     private void showServiceDetailsForID(int serviceID) throws Exception {
+    	String id=Application.currentUser.userID;
+    	Application.rs=Application.stmt.executeQuery("select license_no from servicereln where service_id="+serviceID);
+    	String license_no=null;
+    	while(Application.rs.next())
+    	{license_no=Application.rs.getString("license_no");
+    		
+    	}
+    	String car_make = null,car_model=null;
+    	Application.rs=Application.stmt.executeQuery("select car_make,car_model from car where license_no='"+license_no+"'");
+    	while(Application.rs.next())
+    	{
+    		car_make=Application.rs.getString("car_make");
+    		
+            car_model=Application.rs.getString("car_model");
+    	}
+    	
+    	Date startdate = null;
+    	Application.rs=Application.stmt.executeQuery("select service_date from timeslot where service_id="+serviceID);
+    	while(Application.rs.next())
+    	{startdate=Application.rs.getDate("service_date");
+    		 	}
+    	
+    	int lookup_id=0;
+    	
+    		String make=car_make.toLowerCase();
+        	String model=car_model.toLowerCase();
+    	Application.rs=Application.stmt.executeQuery("select lookup_id from service_type_lookup where car_make='"+make+"' AND car_model='"+model+"'");
+    	System.out.println("The car make"+(make));
+    	System.out.println("The car model"+(model));
+    	
+    	
+    	while(Application.rs.next())
+    	{
+    		lookup_id=Application.rs.getInt("lookup_id");
+    		
+    	}
+    	
+    
+    	Application.rs=Application.stmt.executeQuery("select maintenance_type from maintenance where service_id="+serviceID);
+    	String type=null;
+    	while(Application.rs.next())
+    	{type=Application.rs.getString("maintenance_type");
+    		
+    	}
+    List<Integer>bid=new ArrayList();
+    
+    
+    	Application.rs=Application.stmt.executeQuery("select basic_service_id from service_type_services where service_type='"+type+"'AND lookup_id="+lookup_id);
+    	int basicid=0;
+    	while(Application.rs.next())
+    	{basicid=Application.rs.getInt("basic_service_id");
+    	 bid.add(basicid);
+    		
+    	}
+    
+    	
+     List<Integer>part=new ArrayList();
+     List<Integer>quantity=new ArrayList();
+     
+    	for(int i=0;i<bid.size();i++)
+    	{ Application.rs=Application.stmt.executeQuery("select part_id,quantity from basic_services_parts where basic_service_id="+bid.get(i)+"AND car_make='"+car_make+"' AND car_model='"+car_model+"'");
+    	  int parts=0,count=0;
+    	  while(Application.rs.next())
+    	  {
+    		  parts=Application.rs.getInt("part_id");
+    		  count=Application.rs.getInt("quantity");
+    		  part.add(parts);
+    		  quantity.add(count);
+    	  }
+    	  
+    		
+    	}
+    	
+    	List<String>servicename=new ArrayList();
+    	List<String>rate=new ArrayList();
+    	List<Float>hours=new ArrayList();
+    	for(int k=0;k<bid.size();k++)
+    	{
+    	Application.rs=Application.stmt.executeQuery("select service_name,rate,time_hours from basic_services where basic_service_id="+bid.get(k));
+    	while(Application.rs.next())
+    	{
+    	String sname=Application.rs.getString("service_name");
+    	String cost=Application.rs.getString("rate");
+    	float time=Application.rs.getFloat("time_hours");
+    	servicename.add(sname);
+    	rate.add(cost);
+    	hours.add(time);
+    	}
+    	}
+    	
+    	float totalcost=0;
+    	List<Float>servicecost=new ArrayList();
+    	List<Float>partcost=new ArrayList();
+    	List<Integer>warranty=new ArrayList();
+    	float pcost=0;
+    	int months=0;
+    	for(int a=0;a<part.size();a++)
+    	{
+    	Application.rs=Application.stmt.executeQuery("select warranty,price from parts where part_id="+part.get(a));
+    	 while(Application.rs.next())
+    	 {
+    		 pcost=Application.rs.getFloat("price");
+    		 months=Application.rs.getInt("warranty");
+    		 partcost.add(pcost);
+    		 warranty.add(months);
+    	 }
+    	}
+    	
+    	Calendar c1=Calendar.getInstance();
+    	
+    	int year=startdate.getYear();
+    	int month=startdate.getMonth();
+    	int date=startdate.getDate();
+    	c1.set(year, month, date);
+    	
+    	Calendar currentdate=Calendar.getInstance();
+    	
+    	List<String>inwarranty=new ArrayList();
+    	for(int l=0;l<warranty.size();l++)
+    	{
+    	 c1.add(month, warranty.get(l));
+    	 if(currentdate.before(c1))
+    	 {String temp;
+    		 temp="Yes";
+    		 
+    		 inwarranty.add(temp);
+    	 }else
+    	 {
+    		 inwarranty.add("Warranty Expired");
+    	 }
+    	}
+    	for(int b=0;b<bid.size();b++)
+    	{
+    		float temp=0;
+    		float temp1=0;
+    		temp=quantity.get(b)*partcost.get(b);
+    		if(rate.get(b).equalsIgnoreCase("low"))
+    		{
+    			temp1=50;
+    		}else
+    		{
+    			temp1=65;
+    		}
+    		if(inwarranty.get(b).equalsIgnoreCase("Yes"))
+    		{
+    			float temp2=0;
+    			servicecost.add(b, temp);
+    			    			
+    		}else 
+    		 {temp1+=temp1*hours.get(b);
+    		servicecost.add(temp+temp1);
+    		 }totalcost+=servicecost.get(b);
+    	}
+    	System.out.println("Basic service ID, Service Name, Part_id, quantity, Rate of labor, hours required, Part Cost, Warranty,ServiceCost InWarranty/Expired Warranty ");
+    	for(int j=0;j<bid.size();j++)
+    	{  System.out.println();
+    		System.out.print("\t"+bid.get(j));
+    		System.out.print("\t"+servicename.get(j));
+    		System.out.print("\t"+part.get(j));
+    		System.out.print("\t"+quantity.get(j));
+    		System.out.print("\t"+rate.get(j));
+    		System.out.print("\t"+hours.get(j));
+    		System.out.print("\t" +partcost.get(j));
+    		System.out.print("\t" +warranty.get(j));
+    		System.out.print("\t"+servicecost.get(j));
+    		System.out.print("\t"+inwarranty.get(j));
+    	
+    		
+    		
+    	}
+    	float totalhours=0;
+    	
+    	for(int c=0;c<hours.size();c++)
+    	{totalhours+=hours.get(c);
+    		
+    	}
+    	System.out.print("\n");
+    	System.out.println("The total number of labor hours involved in this service: "+totalhours);
+    	System.out.println("The total cost involved in this service: " +totalcost);
+    	Application.rs=Application.stmt.executeQuery("select employee.emp_name,servicereln.license_no,servicereln.service_id,repair.actual_fees,repair.diagnostic_fees,repair.repair_id,timeslot.mechanic_id,timeslot.service_date,timeslot.service_time,timeslot.end_date,timeslot.end_time from employee,repair,servicereln,timeslot,mechanic where servicereln.service_id='"+serviceID+"' AND timeslot.service_id=servicereln.service_id AND servicereln.service_id = repair.service_id AND timeslot.mechanic_id= mechanic.mechanic_id AND mechanic.emp_id=employee.emp_id");
+        
+       while (Application.rs.next()) {
+        
+        	String mechanic_name = Application.rs.getString("emp_name");
+  		    String license = Application.rs.getString("license_no");
+  		    String service_id = Application.rs.getString("service_id");
+  		    String repair_id = Application.rs.getString("repair_id");
+  		    String mechanic_id = Application.rs.getString("mechanic_id");
+  		    Float actual_fees=Application.rs.getFloat("actual_fees");
+  		    Float diagnostic_fees=Application.rs.getFloat("diagnostic_fees");
+  		    Float totalfees=actual_fees+diagnostic_fees;
+  		    Date start_date = Application.rs.getDate("service_date");
+  		    String start_time=Application.rs.getString("service_time");
+  		    Date end_date=Application.rs.getDate("end_date");
+  		    String end_time=Application.rs.getString("end_time");
+  		  System.out.println("The Customer ID is:" +id);
+  		    System.out.println("The Service ID for the service is:" +service_id);
+  		  System.out.println("The License Plate for the car in this service is:" +license);
+  		  System.out.println("The Service Type involved in this Service is Repair");
+  		  System.out.println("The Mechanic Involved in this service is: " +mechanic_name);
+  		  System.out.println("This Service Started on: "+start_date);
+  		  System.out.println("Start Time:"+start_time);
+  		 
+  		  
+  		  if(end_time== null || end_time.isEmpty())
+  		  {
+  			  System.out.println(" The Status of this Service is still ongoing");
+  		  }
+  		  else
+  			  System.out.println("This service is completed and ended on"+end_date+" end time" +end_time);
+  		  	  System.out.println("The total service cost involved in this service:"+totalfees);
+  		  
+  		  
+  		 System.out.println("\n\n\n");
+  		 
+  		 		 
+  		 
+        }
+        Application.rs=Application.stmt.executeQuery("select employee.emp_name,servicereln.license_no,servicereln.service_id,maintenance.maintenance_id,timeslot.mechanic_id,timeslot.service_date,timeslot.service_time,timeslot.end_date,timeslot.end_time from employee, mechanic,maintenance,servicereln,timeslot where servicereln.service_id='"+serviceID+"' AND timeslot.service_id=servicereln.service_id AND servicereln.service_id = maintenance.service_id AND timeslot.mechanic_id=mechanic.mechanic_id AND mechanic.emp_id=employee.emp_id");
+  		 while(Application.rs.next())
+  		 {String mechanic_name1 = Application.rs.getString("emp_name");
+		    String license1 = Application.rs.getString("license_no");
+		    String service_id1 = Application.rs.getString("service_id");
+		    String maintenance_id1 = Application.rs.getString("maintenance_id");
+		    String mechanic_id1 = Application.rs.getString("mechanic_id");
+		    Date start_date1 = Application.rs.getDate("service_date");
+		    String start_time1=Application.rs.getString("service_time");
+		    Date end_date1=Application.rs.getDate("end_date");
+		    String end_time1=Application.rs.getString("end_time");
+		  System.out.println("The Customer ID is:" +id);
+		    System.out.println("The Service ID for the service is:" +service_id1);
+		  System.out.println("The License Plate for the car in this service is:" +license1);
+		  System.out.println("The Service Type involved in this Service is Maintenance");
+		  System.out.println("The Mechanic Involved in this service is: " +mechanic_name1);
+		  System.out.println("This Service Started on: "+start_date1);
+		  System.out.println("Start Time:"+start_time1);
+		 
+		  
+		  if(end_time1== null || end_time1.isEmpty())
+		  {
+			  System.out.println(" The Status of this Service is still ongoing");
+		  }
+		  else
+			  System.out.println("This service is completed and ended on"+end_date1+" end time" +end_time1);
+		  
+		  
+		 System.out.println("\n\n\n");
+  		 }
 
+    	
     }
+    	
+    	
+	/*List<Integer> servicesIDs = new ArrayList<>();  
+	Application.rs=Application.stmt.executeQuery("select service_id from servicereln where customer_id='"+id+"'" );
+	while(Application.rs.next())
+	{int serviceid=Application.rs.getInt("service_id");
+	 servicesIDs.add(serviceid);
+	}
+	List<String>mtype=new ArrayList<>();
+for (int i=0;i<servicesIDs.size();i++)
+{
+	String s=" select maintenance_type from maintenance where service_id=";
+	s+=servicesIDs.get(i);
+	System.out.println(""+s);
+	Application.rs=Application.stmt.executeQuery(s);
+	String type=Application.rs.getString("maintenance_type");
+	if (Application.rs.wasNull())
+	   { System.out.println("Null Value got" );
+   mtype.add("null");
+	break;
+ }else
+	while (Application.rs.next())
+	{ 
+	
+       	 System.out.println(type);
+    	 mtype.add(type);
+     
+}
+}
+System.out.println("Service IDs");
+for(int j=0;j<servicesIDs.size();j++)
+{System.out.println(" "+servicesIDs.get(j));
+	
+}
+System.out.println("Service Types");
+for(int k=0;k<servicesIDs.size();k++)
+{System.out.println(" "+mtype.get(k));
+	
+}
+}*/
+	
+	
+	
+	
+	
+	
+/*    Application.rs=Application.stmt.executeQuery("select employee.emp_name,servicereln.license_no,servicereln.service_id,requires.quantity,repair.actual_fees,repair.diagnostic_fees,repair.repair_id,timeslot.mechanic_id,timeslot.service_date,timeslot.service_time,timeslot.end_date,timeslot.end_time,requires.part_id,parts.price,parts.warranty from parts,employee,repair, requires,servicereln,timeslot,mechanic where servicereln.customer_id='"+id+"' AND timeslot.service_id=servicereln.service_id AND servicereln.service_id = repair.service_id AND timeslot.mechanic_id= mechanic.mechanic_id AND mechanic.emp_id=employee.emp_id AND servicereln.service_id=requires.service_id AND requires.part_id=parts.part_id");
+   
+    System.out.println("The customer Invoice History:");
+    
+    
+    while (Application.rs.next()) {
+    
+    	String mechanic_name = Application.rs.getString("emp_name");
+		    String license = Application.rs.getString("license_no");
+		    String service_id = Application.rs.getString("service_id");
+		    float actual_fees = Application.rs.getFloat("actual_fees");
+		    float diagonstic_fees = Application.rs.getFloat("diagnostic_fees");
+		    float parts_price=Application.rs.getFloat("price");
+		    int warranty=Application.rs.getInt("warranty");
+		    int quantity=Application.rs.getInt("quantity");
+		    Date start_date = Application.rs.getDate("service_date");
+		    String start_time=Application.rs.getString("service_time");
+		    Date end_date=Application.rs.getDate("end_date");
+		    String end_time=Application.rs.getString("end_time");
+		    float total_fees=actual_fees+diagonstic_fees;
+		    if(warranty==0)
+		    {float parts_fees=quantity*parts_price;
+		      total_fees=total_fees+parts_fees;
+		    	  		    }
+		  System.out.println("The Customer ID is:" +id);
+		    System.out.println("The Service ID for the service is:" +service_id);
+		  System.out.println("The License Plate for the car in this service is:" +license);
+		  System.out.println("The Service Type involved in this Service is Repair");
+		  System.out.println("The Mechanic Involved in this service is: " +mechanic_name);
+		  System.out.println("This Service Started on: "+start_date);
+		  System.out.println("Start Time:"+start_time);
+		  if(end_time== null || end_time.isEmpty())
+	  {
+		  System.out.println(" The Status of this Service is still ongoing");
+	  }
+	  else
+	  {  System.out.println("This service is completed and ended on"+end_date+" end time" +end_time);
+		      System.out.println("The Total fees involved in this service is "+total_fees);
+	  }
+	  
+	 System.out.println("\n\n\n");*/
+
+
+    
 
     // TODO: Section - Customer: View Profile
     private void viewProfile() throws Exception {
         System.out.println("\nVIEW PROFILE:");
         // TODO: display customer details
+        String id=Application.currentUser.userID;
+        Application.rs = Application.stmt.executeQuery("select customer.customer_id,customer.sc_id,customer.customer_name,customer.email,customer.address,customer.telephone_no, car.license_no, car.car_make,car.car_model,car.car_year,car.customer_id, car.date_of_purchase,car.last_recorded_mileage,car.recent_service_date,recent_service_type from customer,car where customer.customer_id='"+id+"' AND customer.customer_id=car.customer_id");
+    	//String Query="select customer.customer_id,customer.customer_name,customer.email,customer.address,customer.telephone_no, car.license_no, car.car_make,car.car_model,car.car_year,car.customer_id, car.date_of_purchase,car.last_recorded_mileage,car.recent_service_date,recent_service_type from customer,car where customer.email='"+customerEmail +"' AND customer.customer_id=car.customer_id";
+    	//System.out.println(Query);
+    	while (Application.rs.next()) {
+		    int cid= Application.rs.getInt("customer_id");
+		    String name = Application.rs.getString("customer_name");
+		    String addr = Application.rs.getString("address");
+		    String phone = Application.rs.getString("telephone_no");
+		    String license_no = Application.rs.getString("license_no");
+		    String email= Application.rs.getString("email");
+		    String car_make = Application.rs.getString("car_make");
+		    String car_year = Application.rs.getString("car_year");
+		    String sc_id= Application.rs.getString("sc_id");
+		    Date purchasedate=Application.rs.getDate("date_of_purchase");
+		    String car_model = Application.rs.getString("car_model");
+		    int mileage = Application.rs.getInt("last_recorded_mileage");
+		    Date latest_service_date = Application.rs.getDate("recent_service_date");
+		    String recent_service_type = Application.rs.getString("recent_service_type");
+		    
+		    
+		    System.out.println("Customer ID: "+cid);
+		    System.out.println("The Customer is registered with the service center:" +sc_id);
+		    System.out.println("Customer Name: " +name);
+		    System.out.println("Address: " +addr);
+		    System.out.println("Phone: " +phone);
+		    System.out.println("email: " +email);
+		    System.out.println("\n\nCar Details");
+		    System.out.println("license no: " +license_no);
+		    System.out.println("Car_Make:  " +car_make);
+		    System.out.println("Car Year " +car_year);
+		    System.out.println("Purchase Date:" +purchasedate);
+		    System.out.println("Car Model: " +car_model);
+		    System.out.println("Last recorder mileage: " +mileage);
+		    System.out.println("latest_service_date: " +latest_service_date);
+		    System.out.println("Recent Service Type: " +recent_service_type);
+    	}
         System.out.println("\nMENU:");
         System.out.println("\t1. Go Back");
         System.out.println("Enter option: ");
@@ -220,96 +639,108 @@ public class Customer extends User {
                 System.out.println("Invalid option");
                 break;
         }
+    	
     }
 
     // TODO: in all error messages for updating fields enter the rules
     // Example: Name should be 5 chars min, Phone number should only be numbers, etc.
     private void updateProfile() throws Exception {
-        boolean updated = false;
+          	
         System.out.println("\nUPDATE PROFILE:");
         System.out.println("\t1. Name");
         System.out.println("\t2. Address");
         System.out.println("\t3. Phone Number");
         System.out.println("\t4. Password");
-        System.out.println("\t3. Go Back");
+        System.out.println("\t5. Go Back");
         System.out.println("Enter option: ");
         int option = scanner.nextInt();
-        scanner.nextLine();
-        switch(option) {
-            case 1:
-                System.out.println("Enter name: ");
-                String name = scanner.nextLine();
-                updated = updateValue(1, name);
-                if(updated) {
-                    System.out.println("Name updated successfully");
-                } else {
-                    System.out.println("Error updating name");
-                }
-                updateProfile();
-                break;
-            case 2:
-                System.out.println("Enter address: ");
-                String address = scanner.nextLine();
-                updated = updateValue(2, address);
-                if(updated) {
-                    System.out.println("Address updated successfully");
-                } else {
-                    System.out.println("Error updating address");
-                }
-                updateProfile();
-                break;
-            case 3:
-                System.out.println("Enter phone number: ");
-                String phoneNumber = scanner.nextLine();
-                updated = updateValue(3, phoneNumber);
-                if(updated) {
-                    System.out.println("Phone number updated successfully");
-                } else {
-                    System.out.println("Error updating phone number");
-                }
-                updateProfile();
-                break;
-            case 4:
-                System.out.println("Enter password: ");
-                String password = scanner.nextLine();
-                updated = updateValue(3, password);
-                if(updated) {
-                    System.out.println("Password updated successfully");
-                } else {
-                    System.out.println("Error updating password");
-                }
-                updateProfile();
-                break;
-            case 5:
-                profileMenu();
-                break;
-            default:
-                System.out.println("Invalid option");
-                break;
+        if(option >= 1 && option <= 4) {
+            System.out.println("Enter new value: ");
+            String a=scanner.nextLine();
+            String newValue = scanner.nextLine();
+            
+            updateProfileField(option, newValue);
+            profileMenu();
+        } else if(option == 5) {
+            profileMenu();
+        } else {
+            System.out.println("Invalid option. Try again.");
+            updateProfile();
         }
+               
+        }
+    private void updateProfileField(int field, String newValue) throws Exception {
+        // TODO: validate value based on field type
+        // TODO: update in db
+    	String id=Application.currentUser.userID;
+    	if(field==1)
+    	{ if(newValue.length()<5)
+    		{ System.out.println("Name should be atleast 5 characters");
+    		  updateProfile();
+    		}
+    		 
+    	  if(isWord(newValue))
+    		
+    	    {Application.stmt.executeUpdate("update customer set customer_name='"+newValue+"' where customer_id="+id);
+    		System.out.println("Profile Details Successfully updated into the database");
+    	    
+    	      }
+    	else {
+    		System.out.println("Invalid Data");
+    		updateProfile();
+    	}
+    	   }
+    	
+    	
+    	if(field==2) { if(newValue == null || newValue.isEmpty()) {
+            System.out.println("Address cannot be empty.");}
+    	{Application.stmt.executeUpdate("update customer set address='"+newValue+"' where customer_id="+id);
+    		System.out.println("Profile Details Successfully Updated");
+    	
+    	}
+    	}
+    	
+    	if(field==3) {if(validatePhone(newValue))
+    	{
+    		Application.stmt.executeUpdate("update customer set telephone_no='"+newValue+"' where customer_id="+id);
+    		System.out.println("Profile Details Successfully Updated");
+    	}
+    	else {
+    		System.out.println("Invalid Data");
+    	}
+    		
+    	}
+    	if(field==4) {if(newValue.length()<8) {
+    		System.out.println("Password cannot be less than 8 characters");
+        	} else {Application.stmt.executeUpdate("update login set password='"+newValue+"' where id="+id);
+        	System.out.println("Profile Details Updated");
+        		
+        	}
+    		
+    	}
+    	}
+    	
+    	
+    
+    public static boolean validatePhone(String phone)
+    {
+    	return Pattern.matches("\\d{3}-\\d{3}-\\d{4}",phone);
+    }
+    public static boolean validateEmail(String email)
+    {
+    	return Pattern.matches("^([_a-zA-Z0-9-]+(\\.[_a-zA-Z0-9-]+)*@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*(\\.[a-zA-Z]{1,6}))?$",email);
+    }
+    
+    public static boolean isWord(String in)
+    {
+    	return true;
     }
 
-    // TODO: write update query to update appropriate field with value in db & return true if update is success
-    private boolean updateValue(int field, String value) throws Exception {
-        boolean updated = false;
+    
+    
 
-        return updated;
-    }
+    
 
-    // TODO: validate all data
-    // All fields mandatory except lastServiceDate; make lastServiceDate NULL if not entered
-    private boolean validateRegisterCarData(String licensePlate, String purchaseDate, String make, String model, String year, String currentMileage, String lastServiceDate) throws Exception {
-        boolean valid = false;
-
-        return valid;
-    }
-
-    // TODO: write update query to register car. Display error message if not registered.
-    private boolean registerCar(String licensePlate, String purchaseDate, String make, String model, String year, String currentMileage, String lastServiceDate) throws Exception {
-        boolean registered = false;
-
-        return registered;
-    }
 
     // Customer: View Service History
     // TODO: Section - Customer: View Service History
@@ -317,6 +748,77 @@ public class Customer extends User {
     private void viewServiceHistory() throws Exception {
         System.out.println("\nVIEW SERVICE HISTORY:");
         // TODO: display details
+        String id=Application.currentUser.userID;
+        Application.rs=Application.stmt.executeQuery("select employee.emp_name,servicereln.license_no,servicereln.service_id,repair.repair_id,timeslot.mechanic_id,timeslot.service_date,timeslot.service_time,timeslot.end_date,timeslot.end_time from employee,repair,servicereln,timeslot,mechanic where servicereln.customer_id='"+id+"' AND timeslot.service_id=servicereln.service_id AND servicereln.service_id = repair.service_id AND timeslot.mechanic_id= mechanic.mechanic_id AND mechanic.emp_id=employee.emp_id");
+        
+        System.out.println("The customer service History:");
+        
+        
+        while (Application.rs.next()) {
+        
+        	String mechanic_name = Application.rs.getString("emp_name");
+  		    String license = Application.rs.getString("license_no");
+  		    String service_id = Application.rs.getString("service_id");
+  		    String repair_id = Application.rs.getString("repair_id");
+  		    String mechanic_id = Application.rs.getString("mechanic_id");
+  		    Date start_date = Application.rs.getDate("service_date");
+  		    String start_time=Application.rs.getString("service_time");
+  		    Date end_date=Application.rs.getDate("end_date");
+  		    String end_time=Application.rs.getString("end_time");
+  		  System.out.println("The Customer ID is:" +id);
+  		    System.out.println("The Service ID for the service is:" +service_id);
+  		  System.out.println("The License Plate for the car in this service is:" +license);
+  		  System.out.println("The Service Type involved in this Service is Repair");
+  		  System.out.println("The Mechanic Involved in this service is: " +mechanic_name);
+  		  System.out.println("This Service Started on: "+start_date);
+  		  System.out.println("Start Time:"+start_time);
+  		 
+  		  
+  		  if(end_time== null || end_time.isEmpty())
+  		  {
+  			  System.out.println(" The Status of this Service is still ongoing");
+  		  }
+  		  else
+  			  System.out.println("This service is completed and ended on"+end_date+" end time" +end_time);
+  		  
+  		  
+  		 System.out.println("\n\n\n");
+  		 
+  		 		 
+  		 
+        }
+        Application.rs=Application.stmt.executeQuery("select employee.emp_name,servicereln.license_no,servicereln.service_id,maintenance.maintenance_id,timeslot.mechanic_id,timeslot.service_date,timeslot.service_time,timeslot.end_date,timeslot.end_time from employee, mechanic,maintenance,servicereln,timeslot where servicereln.customer_id='"+id+"' AND timeslot.service_id=servicereln.service_id AND servicereln.service_id = maintenance.service_id AND timeslot.mechanic_id=mechanic.mechanic_id AND mechanic.emp_id=employee.emp_id");
+  		 while(Application.rs.next())
+  		 {String mechanic_name1 = Application.rs.getString("emp_name");
+		    String license1 = Application.rs.getString("license_no");
+		    String service_id1 = Application.rs.getString("service_id");
+		    String maintenance_id1 = Application.rs.getString("maintenance_id");
+		    String mechanic_id1 = Application.rs.getString("mechanic_id");
+		    Date start_date1 = Application.rs.getDate("service_date");
+		    String start_time1=Application.rs.getString("service_time");
+		    Date end_date1=Application.rs.getDate("end_date");
+		    String end_time1=Application.rs.getString("end_time");
+		  System.out.println("The Customer ID is:" +id);
+		    System.out.println("The Service ID for the service is:" +service_id1);
+		  System.out.println("The License Plate for the car in this service is:" +license1);
+		  System.out.println("The Service Type involved in this Service is Maintenance");
+		  System.out.println("The Mechanic Involved in this service is: " +mechanic_name1);
+		  System.out.println("This Service Started on: "+start_date1);
+		  System.out.println("Start Time:"+start_time1);
+		 
+		  
+		  if(end_time1== null || end_time1.isEmpty())
+		  {
+			  System.out.println(" The Status of this Service is still ongoing");
+		  }
+		  else
+			  System.out.println("This service is completed and ended on"+end_date1+" end time" +end_time1);
+		  
+		  
+		 System.out.println("\n\n\n");
+  			 
+  		 }
+  		       
         System.out.println("\nMENU:");
         System.out.println("\t1. Go Back");
         System.out.println("Enter option: ");
@@ -334,10 +836,8 @@ public class Customer extends User {
     // Customer: Schedule Service
     private void scheduleService() throws Exception {
         System.out.println("\nSCHEDULE SERVICE:");
-        scanner.nextLine();
         System.out.println("A. Enter license plate: ");
         String licensePlate = scanner.nextLine();
-
         System.out.println("B. Enter current mileage: ");
         int currentMileage = 0;
         try {
@@ -349,7 +849,7 @@ public class Customer extends User {
 
         scanner.nextLine();
         System.out.println("C. Enter mechanic name: ");
-        String mechanicName = scanner.nextLine();
+        String mechanicName = scanner.next();
         if(validateScheduleServiceData(licensePlate, currentMileage, mechanicName)) {
             System.out.println("\nMENU:");
             System.out.println("\t1. Schedule Maintenance");
@@ -1043,7 +1543,96 @@ public class Customer extends User {
     //F. Mechanic Name
     //G. Total Service Cost
     private void displayCompletedServiceDetails() throws Exception {
+    	 String id=Application.currentUser.userID;
+         Application.rs=Application.stmt.executeQuery("select employee.emp_name,servicereln.license_no,servicereln.service_id,repair.repair_id,timeslot.mechanic_id,timeslot.service_date,timeslot.service_time,timeslot.end_date,timeslot.end_time from employee,repair,servicereln,timeslot,mechanic where servicereln.customer_id='"+id+"' AND timeslot.service_id=servicereln.service_id AND servicereln.service_id = repair.service_id AND timeslot.mechanic_id= mechanic.mechanic_id AND mechanic.emp_id=employee.emp_id");
+         
+         System.out.println("The customer service History for the customer ");
+         
+         
+         while (Application.rs.next()) {
+         
+         	String mechanic_name = Application.rs.getString("emp_name");
+   		    String license = Application.rs.getString("license_no");
+   		    String service_id = Application.rs.getString("service_id");
+   		    String repair_id = Application.rs.getString("repair_id");
+   		    String mechanic_id = Application.rs.getString("mechanic_id");
+   		    Date start_date = Application.rs.getDate("service_date");
+   		    String start_time=Application.rs.getString("service_time");
+   		    Date end_date=Application.rs.getDate("end_date");
+   		    String end_time=Application.rs.getString("end_time");
+   		  System.out.println("The Customer ID is:" +id);
+   		    System.out.println("The Service ID for the service is:" +service_id);
+   		  System.out.println("The License Plate for the car in this service is:" +license);
+   		  System.out.println("The Service Type involved in this Service is Repair");
+   		  System.out.println("The Mechanic Involved in this service is: " +mechanic_name);
+   		  System.out.println("This Service Started on: "+start_date);
+   		  System.out.println("Start Time:"+start_time);
+   		 
+   		  
+   		  if(end_time== null || end_time.isEmpty())
+   		  {
+   			  System.out.println(" The Status of this Service is still ongoing");
+   		  }
+   		  else
+   			  System.out.println("This service is completed and ended on"+end_date+" end time" +end_time);
+   		  
+   		  
+   		 System.out.println("\n\n\n");
+   		 
+   		 		 
+   		 
+         }
+         Application.rs=Application.stmt.executeQuery("select employee.emp_name,servicereln.license_no,servicereln.service_id,maintenance.maintenance_id,timeslot.mechanic_id,timeslot.service_date,timeslot.service_time,timeslot.end_date,timeslot.end_time from employee, mechanic,maintenance,servicereln,timeslot where servicereln.customer_id='"+id+"' AND timeslot.service_id=servicereln.service_id AND servicereln.service_id = maintenance.service_id AND timeslot.mechanic_id=mechanic.mechanic_id AND mechanic.emp_id=employee.emp_id");
+   		 while(Application.rs.next())
+   		 {String mechanic_name1 = Application.rs.getString("emp_name");
+ 		    String license1 = Application.rs.getString("license_no");
+ 		    String service_id1 = Application.rs.getString("service_id");
+ 		    String maintenance_id1 = Application.rs.getString("maintenance_id");
+ 		    String mechanic_id1 = Application.rs.getString("mechanic_id");
+ 		    Date start_date1 = Application.rs.getDate("service_date");
+ 		    String start_time1=Application.rs.getString("service_time");
+ 		    Date end_date1=Application.rs.getDate("end_date");
+ 		    String end_time1=Application.rs.getString("end_time");
+ 		  System.out.println("The Customer ID is:" +id);
+ 		    System.out.println("The Service ID for the service is:" +service_id1);
+ 		  System.out.println("The License Plate for the car in this service is:" +license1);
+ 		  System.out.println("The Service Type involved in this Service is Maintenance");
+ 		  System.out.println("The Mechanic Involved in this service is: " +mechanic_name1);
+ 		  System.out.println("This Service Started on: "+start_date1);
+ 		  System.out.println("Start Time:"+start_time1);
+ 		 
+ 		  
+ 		  if(end_time1== null || end_time1.isEmpty())
+ 		  {
+ 			  System.out.println(" The Status of this Service is still ongoing");
+ 		  }
+ 		  else
+ 			  System.out.println("This service is completed and ended on"+end_date1+" end time" +end_time1);
+ 		  
+ 		  
+ 		 System.out.println("\n\n\n");
+   			 
+   		 }
+    	
+    }  		 
+  		  
+        
+    
+  		 
+    	
+    	
+    	
 
+    
+    static void close(ResultSet rs) {
+        if(rs != null) {
+            try { rs.close(); } catch(Throwable whatever) {}
+        }
+    }
+
+    static void close(Statement st) {
+    if(st != null) {
+        try { st.close(); } catch(Throwable whatever) {}
     }
 
     // Initialize 30 minute time slots from 8 AM to 7 PM

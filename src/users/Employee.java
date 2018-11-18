@@ -2,12 +2,16 @@ package users;
 
 import app.*;
 
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.*;
 import java.util.regex.Pattern;
 
 public class Employee extends User {
 
     static Scanner scanner = new Scanner(System.in);
+    public static ResultSet rs2 = null;
+    public static Statement stmt2 = null;
 
     public Employee(String userID, String userType) {
         super(userID, userType);
@@ -53,16 +57,36 @@ public class Employee extends User {
         System.out.println("\nVIEW PROFILE:");
         // TODO: display profile details
        String id=Application.currentUser.userID;
-       System.out.println("ID: "+id);
+       System.out.println("Employee ID: "+id);
         String utype=Application.currentUser.userType;
-        Application.rs = Application.stmt.executeQuery("select employee.emp_id,employee.emp_name,employee.addr,employee.phone,employee.email,payroll.start_date,payroll.wages,payroll.frequency from employee,payroll where employee.emp_id="+id+"AND employee.emp_id=payroll.emp_id");
-		while (Application.rs.next()) {
+      
+       if(utype.equalsIgnoreCase("receptionist"))
+       	{ Application.rs=Application.stmt.executeQuery("select receptionistat.sc_id from receptionist, employee, receptionistat where employee.emp_id='"+id+"' AND employee.emp_id=receptionist.emp_id AND receptionist.receptionist_id=receptionistat.receptionist_id");
+        	while(Application.rs.next())
+         	{
+        	
+        	String service_center_id=Application.rs.getString("sc_id");
+        	System.out.println("The Receptionist is at service center: "+service_center_id);
+        		}
+       	}	
+       if(utype.equalsIgnoreCase("manager"))
+      	{ Application.rs=Application.stmt.executeQuery("select manages.sc_id from manager, employee, manages where employee.emp_id='"+id+"' AND employee.emp_id=manager.emp_id AND manager.manager_id=manages.manager_id");
+       	while(Application.rs.next())
+        	{
+       	
+       	String service_center_id=Application.rs.getString("sc_id");
+       	System.out.println("The Manager manages the service center: "+service_center_id);
+       		}
+      	}	
+        Application.rs = Application.stmt.executeQuery("select employee.emp_id,employee.emp_name,employee.emp_location,employee.addr,employee.phone,employee.email,payroll.start_date,payroll.wages,payroll.frequency from employee,payroll where employee.emp_id="+id+"AND employee.emp_id=payroll.emp_id");
+        while (Application.rs.next()) {
 		    String eid= Application.rs.getString("emp_id");
 		    String name = Application.rs.getString("emp_name");
 		    String addr = Application.rs.getString("addr");
 		    String phone = Application.rs.getString("phone");
 		    String email= Application.rs.getString("email");
 		    float wages=Application.rs.getFloat("wages");
+		    String location=Application.rs.getString("emp_location");
 		    Date startdate=Application.rs.getDate("start_date");
 		    String frequency= Application.rs.getString("frequency");
 		    
@@ -72,10 +96,15 @@ public class Employee extends User {
 		    System.out.println("Phone: " +phone);
 		    System.out.println("email: " +email);
 		    System.out.println("Wages: " +wages);
+		    System.out.println("Location:" +location);
 		    System.out.println("Start Date: " +startdate);
 		    System.out.println("frequency: " +frequency);
 		    System.out.println("Role: " +utype);
-		}
+		
+		    if (utype.equalsIgnoreCase("receptionist"))
+			   { 
+			    
+			}
 
         System.out.println("MENU:");
         System.out.println("\t1. Go back");
@@ -87,6 +116,9 @@ public class Employee extends User {
             System.out.println("Invalid option. Try again.");
             viewProfile();
         }
+		} 
+		
+		
     }
 
     // Employee: Update Profile
@@ -244,5 +276,15 @@ public class Employee extends User {
 		    System.out.println("Recent Service Type: " +recent_service_type);
 		}
     }
+    static void close(Statement st) {
+        if(st != null) {
+            try { st.close(); } catch(Throwable whatever) {}
+        }
+    }
 
+    static void close(ResultSet rs) {
+        if(rs != null) {
+            try { rs.close(); } catch(Throwable whatever) {}
+        }
+    }
 }
