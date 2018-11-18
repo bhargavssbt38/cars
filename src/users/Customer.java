@@ -122,7 +122,7 @@ public class Customer extends User {
             	  make=make;
               }
               else
-              {System.out.println("Make of the car needs to be either Honda or Toyota or Nissan");
+              {System.out.println("Make of the car needs to be either Honda or Toyota or Nissan");registerCarMenu();
               
               }
               if(model==null||model.isEmpty())
@@ -651,7 +651,9 @@ for(int k=0;k<servicesIDs.size();k++)
         int option = scanner.nextInt();
         if(option >= 1 && option <= 4) {
             System.out.println("Enter new value: ");
-            String newValue = scanner.next();
+            String a=scanner.nextLine();
+            String newValue = scanner.nextLine();
+            
             updateProfileField(option, newValue);
             profileMenu();
         } else if(option == 5) {
@@ -672,19 +674,18 @@ for(int k=0;k<servicesIDs.size();k++)
     		  updateProfile();
     		}
     		 
-    	   else {
-    		 if(isWord(newValue))
+    	  if(isWord(newValue))
     		
-    	 {Application.stmt.executeUpdate("update customer set customer_name='"+newValue+"' where customer_id="+id);
+    	    {Application.stmt.executeUpdate("update customer set customer_name='"+newValue+"' where customer_id="+id);
     		System.out.println("Profile Details Successfully updated into the database");
     	    
-    	  }
+    	      }
     	else {
     		System.out.println("Invalid Data");
     		updateProfile();
     	}
     	   }
-    	}
+    	
     	
     	if(field==2) { if(newValue == null || newValue.isEmpty()) {
             System.out.println("Address cannot be empty.");}
@@ -727,7 +728,7 @@ for(int k=0;k<servicesIDs.size();k++)
     
     public static boolean isWord(String in)
     {
-    	return Pattern.matches("[a-zA-z]+", in);
+    	return true;
     }
 
     
