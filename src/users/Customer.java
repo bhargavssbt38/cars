@@ -837,7 +837,7 @@ for(int k=0;k<servicesIDs.size();k++)
     private void scheduleService() throws Exception {
         System.out.println("\nSCHEDULE SERVICE:");
         System.out.println("A. Enter license plate: ");
-        String licensePlate = scanner.nextLine();
+        String licensePlate = scanner.next();
         System.out.println("B. Enter current mileage: ");
         int currentMileage = 0;
         try {
@@ -849,7 +849,7 @@ for(int k=0;k<servicesIDs.size();k++)
 
         scanner.nextLine();
         System.out.println("C. Enter mechanic name: ");
-        String mechanicName = scanner.next();
+        String mechanicName = scanner.nextLine();
         if(validateScheduleServiceData(licensePlate, currentMileage, mechanicName)) {
             System.out.println("\nMENU:");
             System.out.println("\t1. Schedule Maintenance");
@@ -1295,7 +1295,6 @@ for(int k=0;k<servicesIDs.size();k++)
             boolean foundInSC = false;
             String scID = findCustomerServiceCenter();
             String query = "select * from INVENTORY where PART_ID = " + partID + " and SC_ID = '" + scID + "' and CURRENT_QTY >= " + qty;
-            System.out.println(query);
             Application.rs = Application.stmt.executeQuery(query);
             while(Application.rs.next()) {
                 int currentQty = Application.rs.getInt("CURRENT_QTY");
@@ -1313,7 +1312,6 @@ for(int k=0;k<servicesIDs.size();k++)
             // Check other SC
             if(!foundInSC) {
                 query = "select * from INVENTORY where PART_ID = " + partID + " and CURRENT_QTY >= " + qty;
-                System.out.println(query);
                 Application.rs = Application.stmt.executeQuery(query);
                 while(Application.rs.next()) {
                     int currentQty = Application.rs.getInt("CURRENT_QTY");
@@ -1331,10 +1329,10 @@ for(int k=0;k<servicesIDs.size();k++)
         }
 
         for(String sc : scParts.keySet()) {
-            System.out.println("FOUND AT SC : " + sc);
+
             Map<Integer, Integer> p = scParts.get(sc);
             for(int pid : p.keySet()) {
-                System.out.println("part - " + pid);
+
             }
         }
 
@@ -1631,9 +1629,13 @@ for(int k=0;k<servicesIDs.size();k++)
     }
 
     static void close(Statement st) {
-    if(st != null) {
-        try { st.close(); } catch(Throwable whatever) {}
-    }
+		if (st != null) {
+			try {
+				st.close();
+			} catch (Throwable whatever) {
+			}
+		}
+	}
 
     // Initialize 30 minute time slots from 8 AM to 7 PM
     private Set<String> initTimeSlots() throws Exception {
