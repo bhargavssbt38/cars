@@ -257,7 +257,7 @@ public class Customer extends User {
     	{
     		lookup_id=Application.rs.getInt("lookup_id");
     	}
-    	System.out.println("The lookup ID for this service is"+lookup_id);
+    
     	Application.rs=Application.stmt.executeQuery("select maintenance_type from maintenance where service_id="+serviceID);
     	String type=null;
     	while(Application.rs.next())
@@ -307,7 +307,8 @@ public class Customer extends User {
     	}
     	}
     	
-    	float totalcost;
+    	float totalcost=0;
+    	List<Float>servicecost=new ArrayList();
     	List<Float>partcost=new ArrayList();
     	List<Integer>warranty=new ArrayList();
     	float pcost=0;
@@ -323,19 +324,46 @@ public class Customer extends User {
     		 warranty.add(months);
     	 }
     	}
-    	System.out.println("The basic service ID, Service Name, Part_id, quantity, Rate of labor, hours required for this service");
-    	for(int j=0;j<bid.size();j++)
+    	for(int b=0;b<bid.size();b++)
     	{
+    		float temp=0;
+    		float temp1=0;
+    		temp=quantity.get(b)*partcost.get(b);
+    		if(rate.get(b).equalsIgnoreCase("low"))
+    		{
+    			temp1=50;
+    		}else
+    		{
+    			temp1=65;
+    		}
+    		temp1+=temp1*hours.get(b);
+    		servicecost.add(temp+temp1);
+    		totalcost+=servicecost.get(b);
+    	}
+    	
+    	System.out.println("Basic service ID, Service Name, Part_id, quantity, Rate of labor, hours required, Part Cost, Warranty and ServiceCost ");
+    	for(int j=0;j<bid.size();j++)
+    	{  System.out.println();
     		System.out.print("\t"+bid.get(j));
     		System.out.print("\t"+servicename.get(j));
     		System.out.print("\t"+part.get(j));
     		System.out.print("\t"+quantity.get(j));
     		System.out.print("\t"+rate.get(j));
     		System.out.print("\t"+hours.get(j));
-    		System.out.print("\t" );
+    		System.out.print("\t" +partcost.get(j));
+    		System.out.print("\t" +warranty.get(j));
+    		System.out.print("\t"+servicecost.get(j));
     		
-    		System.out.println(" ");
+    		
     	}
+    	float totalhours=0;
+    	for(int c=0;c<hours.size();c++)
+    	{totalhours+=hours.get(c);
+    		
+    	}
+    	System.out.print("\n");
+    	System.out.println("The total number of labor hours involved in this service: "+totalhours);
+    	System.out.println("The total cost involved in this service: " +totalcost);
     	Application.rs=Application.stmt.executeQuery("select employee.emp_name,servicereln.license_no,servicereln.service_id,repair.actual_fees,repair.diagnostic_fees,repair.repair_id,timeslot.mechanic_id,timeslot.service_date,timeslot.service_time,timeslot.end_date,timeslot.end_time from employee,repair,servicereln,timeslot,mechanic where servicereln.service_id='"+serviceID+"' AND timeslot.service_id=servicereln.service_id AND servicereln.service_id = repair.service_id AND timeslot.mechanic_id= mechanic.mechanic_id AND mechanic.emp_id=employee.emp_id");
         
        while (Application.rs.next()) {
