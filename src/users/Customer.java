@@ -6,6 +6,7 @@ import pages.*;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.*;
+import java.util.Calendar;
 import java.util.regex.Pattern;
 
 public class Customer extends User {
@@ -239,24 +240,42 @@ public class Customer extends User {
     //J. Total Service Cost
     private void showServiceDetailsForID(int serviceID) throws Exception {
     	String id=Application.currentUser.userID;
-    	Application.rs=Application.stmt.executeQuery("select car_model,car_make from car where customer_id='"+id+"'");
+    	Application.rs=Application.stmt.executeQuery("select license_no from servicereln where service_id="+serviceID);
+    	String license_no=null;
+    	while(Application.rs.next())
+    	{license_no=Application.rs.getString("license_no");
+    		
+    	}
     	String car_make = null,car_model=null;
+    	Application.rs=Application.stmt.executeQuery("select car_make,car_model from car where license_no='"+license_no+"'");
     	while(Application.rs.next())
     	{
     		car_make=Application.rs.getString("car_make");
+    		
             car_model=Application.rs.getString("car_model");
     	}
-    	String make=car_make.toLowerCase();
-    	String model=car_model.toLowerCase();
+    	
+    	Date startdate = null;
+    	Application.rs=Application.stmt.executeQuery("select service_date from timeslot where service_id="+serviceID);
+    	while(Application.rs.next())
+    	{startdate=Application.rs.getDate("service_date");
+    		 	}
+    	
+    	int lookup_id=0;
+    	
+    		String make=car_make.toLowerCase();
+        	String model=car_model.toLowerCase();
     	Application.rs=Application.stmt.executeQuery("select lookup_id from service_type_lookup where car_make='"+make+"' AND car_model='"+model+"'");
     	System.out.println("The car make"+(make));
     	System.out.println("The car model"+(model));
     	
-    	int lookup_id=0;
+    	
     	while(Application.rs.next())
     	{
     		lookup_id=Application.rs.getInt("lookup_id");
+    		
     	}
+    	
     
     	Application.rs=Application.stmt.executeQuery("select maintenance_type from maintenance where service_id="+serviceID);
     	String type=null;
@@ -265,6 +284,8 @@ public class Customer extends User {
     		
     	}
     List<Integer>bid=new ArrayList();
+    
+    
     	Application.rs=Application.stmt.executeQuery("select basic_service_id from service_type_services where service_type='"+type+"'AND lookup_id="+lookup_id);
     	int basicid=0;
     	while(Application.rs.next())
@@ -272,6 +293,7 @@ public class Customer extends User {
     	 bid.add(basicid);
     		
     	}
+    
     	
      List<Integer>part=new ArrayList();
      List<Integer>quantity=new ArrayList();
@@ -324,6 +346,30 @@ public class Customer extends User {
     		 warranty.add(months);
     	 }
     	}
+    	
+    	Calendar c1=Calendar.getInstance();
+    	
+    	int year=startdate.getYear();
+    	int month=startdate.getMonth();
+    	int date=startdate.getDate();
+    	c1.set(year, month, date);
+    	
+    	Calendar currentdate=Calendar.getInstance();
+    	
+    	List<String>inwarranty=new ArrayList();
+    	for(int l=0;l<warranty.size();l++)
+    	{
+    	 c1.add(month, warranty.get(l));
+    	 if(currentdate.before(c1))
+    	 {String temp;
+    		 temp="Yes";
+    		 
+    		 inwarranty.add(temp);
+    	 }else
+    	 {
+    		 inwarranty.add("Warranty Expired");
+    	 }
+    	}
     	for(int b=0;b<bid.size();b++)
     	{
     		float temp=0;
@@ -336,12 +382,17 @@ public class Customer extends User {
     		{
     			temp1=65;
     		}
-    		temp1+=temp1*hours.get(b);
+    		if(inwarranty.get(b).equalsIgnoreCase("Yes"))
+    		{
+    			float temp2=0;
+    			servicecost.add(b, temp);
+    			    			
+    		}else 
+    		 {temp1+=temp1*hours.get(b);
     		servicecost.add(temp+temp1);
-    		totalcost+=servicecost.get(b);
+    		 }totalcost+=servicecost.get(b);
     	}
-    	
-    	System.out.println("Basic service ID, Service Name, Part_id, quantity, Rate of labor, hours required, Part Cost, Warranty and ServiceCost ");
+    	System.out.println("Basic service ID, Service Name, Part_id, quantity, Rate of labor, hours required, Part Cost, Warranty,ServiceCost InWarranty/Expired Warranty ");
     	for(int j=0;j<bid.size();j++)
     	{  System.out.println();
     		System.out.print("\t"+bid.get(j));
@@ -353,10 +404,13 @@ public class Customer extends User {
     		System.out.print("\t" +partcost.get(j));
     		System.out.print("\t" +warranty.get(j));
     		System.out.print("\t"+servicecost.get(j));
+    		System.out.print("\t"+inwarranty.get(j));
+    	
     		
     		
     	}
     	float totalhours=0;
+    	
     	for(int c=0;c<hours.size();c++)
     	{totalhours+=hours.get(c);
     		
