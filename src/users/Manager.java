@@ -266,6 +266,26 @@ public class Manager extends Employee {
         }
         Float earnings = Float.parseFloat(prComp);
        // if(prPeriod.equalsIgnoreCase("hourly"))
+        String status = "";
+        String hrs = "";
+        Application.rs = Application.stmt.executeQuery("select mechanic_id, hours_worked from mechanic where emp_id = '"+eid+"'");
+        while(Application.rs.next())
+        {
+            status = Application.rs.getString("mechanic_id");
+            if(Application.rs.wasNull())
+            {
+                status = "";
+                break;
+            }
+            hrs = Application.rs.getString("hours_worked");
+        }
+
+        if(status.equalsIgnoreCase(""))
+            status = "mechanic";
+        else
+        {
+            status = "receptionist";
+        }
 
     	System.out.print("Payroll for employee id: ");
         System.out.println(eid);
@@ -277,12 +297,24 @@ public class Manager extends Employee {
         System.out.println(eid);
     	System.out.print("Employee Name: ");
         System.out.println(prName);
-    	//System.out.print("Salary: ");
-        //System.out.println(prComp);
-    	//System.out.print("Units: ");
-    	//System.out.println("What is units?");
-    	System.out.print("Earnings: ");
+        System.out.print("Compensation: ");
         System.out.println(prComp);
+    	System.out.print("Earnings: ");
+    	if(status.equalsIgnoreCase("mechanic"))
+        {
+            System.out.println("Hours worked this payment period: "+hrs);
+            Float h = Float.parseFloat(hrs);
+            System.out.println(earnings*h);
+        }
+        else
+        {
+            System.out.println("This employee earns a monthly salary");
+            System.out.println(prComp);
+        }
+        //System.out.println(prComp);
+    	System.out.print("Units: ");
+    	System.out.println("USD (United States Dollars)");
+
 
     	System.out.println("\n\n Menu");
     	System.out.println("1. Go back");
