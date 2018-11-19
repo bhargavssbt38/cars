@@ -298,7 +298,7 @@ public class Manager extends Employee {
     private void inventory() throws Exception {
 
         String scID = getScId();
-        String displayInvStmt = "select * from inventory i,parts p where p.part_id=i.part_id and i.sc_id = "+scID;
+        String displayInvStmt = "select * from inventory i,parts p where p.part_id=i.part_id and i.sc_id = '"+scID+"'";
         System.out.println("Inventory");
         Application.rs = Application.stmt.executeQuery(displayInvStmt);
         Statement stat = null;
@@ -477,7 +477,7 @@ public class Manager extends Employee {
     private void notificationsdetail(String oid) throws Exception
     {
 
-        String getDetails = "select * from orders where order_id = "+oid;
+        String getDetails = "select * from orders where order_id = '"+oid+"'";
 
         String orderDate = "", pname = "", sname = "", purName = "", qty = "", unitPrice = "", totCost = "", status = "";
 
@@ -491,8 +491,8 @@ public class Manager extends Employee {
             qty = Application.rs.getString("qty");
         }
 
-        getDetails = "select part_name,price from parts where part_id = "+pid;
-        //System.out.println(getDetails);
+        getDetails = "select part_name,price from parts where part_id = '"+pid+"'";
+        System.out.println(getDetails);
         Application.rs = Application.stmt.executeQuery(getDetails);
         while(Application.rs.next())
         {
@@ -500,20 +500,20 @@ public class Manager extends Employee {
             unitPrice = Application.rs.getString("price");
         }
 
-        Application.rs = Application.stmt.executeQuery("select distributor_id from received_from where order_id = "+oid);
+        Application.rs = Application.stmt.executeQuery("select distributor_id from received_from where order_id = '"+oid+"'");
         while(Application.rs.next())
         {
             sname = Application.rs.getString("distributor_id");
         }
 
-        Application.rs = Application.stmt.executeQuery("select distributor_name from distributor where distributor_id = "+sname);
+        Application.rs = Application.stmt.executeQuery("select distributor_name from distributor where distributor_id = '"+sname+"'");
         while(Application.rs.next())
         {
             sname = Application.rs.getString("distributor_name");
         }
 
         totCost = String.valueOf(Integer.parseInt(qty)*Integer.parseInt(unitPrice));
-        getDetails = "select sc_id from placed_to where order_id = "+oid;
+        getDetails = "select sc_id from placed_to where order_id = '"+oid+"'";
 
 
         Application.rs = Application.stmt.executeQuery(getDetails);
@@ -522,7 +522,7 @@ public class Manager extends Employee {
             purName = Application.rs.getString("sc_id");
         }
 
-        Application.rs = Application.stmt.executeQuery("select sc_name from servicecentre where sc_id = "+purName);
+        Application.rs = Application.stmt.executeQuery("select sc_name from servicecentre where sc_id = '"+purName+"'");
         while(Application.rs.next())
         {
             purName = Application.rs.getString("sc_name");
