@@ -1007,11 +1007,56 @@ for(int k=0;k<servicesIDs.size();k++)
     		sid.add(service);
     	}
     	}
+    	List<String>lplate=new ArrayList();
+    	List<Integer>ehours=new ArrayList();
+    	List <String>problem=new ArrayList();
+    	List<String>mtype=new ArrayList();
+    	for (int b=0;b<sid.size();b++)
+    	{ Application.rs=Application.stmt.executeQuery("select license_no from servicereln where service_id="+sid.get(b));
+    	  while(Application.rs.next())
+    	  {String x=Application.rs.getString("license_no");
+    	    lplate.add(x);
+       	  }
+    	  Application.rs=Application.stmt.executeQuery("select estimated_hours from services where service_id="+sid.get(b));
+    	  while(Application.rs.next())
+    	  {int y=Application.rs.getInt("estimated_hours");
+    		  ehours.add(y);
+    	  }
+    	  Application.rs=Application.stmt.executeQuery("select problem from repair where service_id="+sid.get(b));
+    	  if(Application.rs==null)
+    	  {
+    		  problem.add("No Repair");
+    	  }else {
+    	 	  while(Application.rs.next())
+    	  { String c= Application.rs.getString("problem");
+    		problem.add(c);
+    	  }
+    	  }
+    	  Application.rs=Application.stmt.executeQuery("select maintenance_type from maintenance where service_id="+sid.get(b));
+    	  if(Application.rs==null)
+    	  { System.out.println("Hello");
+    		  mtype.add("No Maintenance");
+    	  }else {
+    	 	  while(Application.rs.next())
+    	  { String d= Application.rs.getString("maintenance_type");
+    	     System.out.println("watha");
+    		mtype.add(d);
+    		System.out.print("\t"+d);
+    	  }
+    	  }
+    		
+    	}
+    		
     	System.out.println("Upcoming Services for this customer" +id);
+    	System.out.println();
   	  for(int j=0;j<upcoming_services.size();j++)
-  	  {System.out.println(upcoming_services.get(j));
-  	   System.out.print("\t" +sid.get(j));
-  		  
+  	  {System.out.print("Date: "+upcoming_services.get(j));
+  	   System.out.print("\t Service ID: " +sid.get(j));
+  	   System.out.print("\t License Plate: "+lplate.get(j));
+  	   System.out.print("\t Estimated hours for this service: "+ehours.get(j));
+  	   System.out.print("\t Repair: "+problem.get(j));
+  	   //System.out.print("\t Maintenance Type: "+mtype.get(j));
+  	   System.out.println();
   	  }
 
     }
