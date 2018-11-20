@@ -1210,25 +1210,12 @@ for(int k=0;k<servicesIDs.size();k++)
             Map<Integer, Integer> partsMap = scParts.get(sc);
             partsFound += partsMap.size();
         }
-        scheduleMaintenance2(datesResult, licensePlate, currentMileage, mechanicName, totalTime, serviceType, laborCharge, scParts);
+        //scheduleMaintenance2(datesResult, licensePlate, currentMileage, mechanicName, totalTime, serviceType, laborCharge, scParts);
         if(partsFound != parts.size()) {
             System.out.println("Insufficient parts. Please try again after " + dateFormat.format(lastDay).toUpperCase() + ".");
         } else if(datesResult.size() == 2) {
             scheduleMaintenance2(datesResult, licensePlate, currentMileage, mechanicName, totalTime, serviceType, laborCharge, scParts);
         }
-
-/*
-            // If parts are not sufficient
-            if(!checkPartsSufficient()) {
-                // Check if an order exists that fulfills this requirement; If it doesn't - place the order
-                Date orderFulfilledDate = getExistingOrderForPartsDate();
-                if(orderFulfilledDate == null) {
-                    orderFulfilledDate = placeOrder();
-                }
-                System.out.println("Please try again after " + orderFulfilledDate.toString());
-                scheduleService();
-            }
-*/
     }
 
     // Customer: Schedule Maintenance (Page 2)
@@ -1273,8 +1260,14 @@ for(int k=0;k<servicesIDs.size();k++)
         }
     }
 
-    // Returns : <Date foundDate, <[String startTime, String endTime], int mechanicID>>
+    // This method is called for scheduling maintenance
     private Map<Date, Map<String[], Integer>> findServiceDates(float timeReqd, String mechanicName) throws Exception {
+    	return findServiceDates(timeReqd, mechanicName, true);
+	}
+
+
+    // Returns : <Date foundDate, <[String startTime, String endTime], int mechanicID>>
+    private Map<Date, Map<String[], Integer>> findServiceDates(float timeReqd, String mechanicName, boolean isMaintenace) throws Exception {
 
         String scID = findCustomerServiceCenter();
 
@@ -1299,9 +1292,12 @@ for(int k=0;k<servicesIDs.size();k++)
             String slotsQuery = "select * from TIMESLOT where SERVICE_ID in (" + serviceIDQuery + ") and SERVICE_DATE = '" + dateFormat.format(day).toUpperCase() + "'";
             Application.rs = Application.stmt.executeQuery(slotsQuery);
 
-            if(checkMaintenanceLimit(slotsQuery, timeReqd)) {
-                continue; // Skip this day
-            }
+            if(isMaintenace) {
+				if(checkMaintenanceLimit(slotsQuery, timeReqd)) {
+					continue; // Skip this day
+				}
+			}
+
 
             List<Integer> mechanics = new ArrayList<>();
 
@@ -1381,6 +1377,81 @@ for(int k=0;k<servicesIDs.size();k++)
         }
         return result;
     }
+
+	private void scheduleRepairProcess(int problem, String licensePlate, int currentMileage, String mechanicName) throws Exception {
+
+		displayDiagnosticReport(problem, licensePlate);
+
+		// Find list of basic services for this problem
+		String basicServicesQuery = "select REPAIR_SERVICES_LOOKUP.BASIC_SERVICE_ID from REPAIR_SERVICES_LOOKUP where REPAIR_SERVICES_LOOKUP.REPAIR_LOOKUP_ID = " + problem;
+
+		Application.rs = Application.stmt.executeQuery(basicServicesQuery);
+		List<Integer> basicServicesIDs = new ArrayList<>();
+		while(Application.rs.next()) {
+			int basicServiceID = Application.rs.getInt("basic_service_id");
+			basicServicesIDs.add(basicServiceID);
+		}
+		if(basicServicesIDs.size() == 0) {
+			System.out.println("Basic services not found");
+			return;
+		}
+
+		// Based on list of basic services - find time required
+		float totalTime = 0.0F;
+		String basicServiceDetailsQuery = "select * from basic_services where basic_service_id in (";
+		for(int i = 0; i < basicServicesIDs.size(); i++) {
+			basicServiceDetailsQuery += "" + basicServicesIDs.get(i);
+			if(i < basicServicesIDs.size()-1) {
+				basicServiceDetailsQuery += ",";
+			}
+		}
+		basicServiceDetailsQuery += ")";
+		Application.rs = Application.stmt.executeQuery(basicServiceDetailsQuery);
+		while(Application.rs.next()) {
+			float time = Application.rs.getFloat("time_hours");
+			totalTime += time;
+		}
+
+		// Based on list of basic service - find labor charge
+		float laborCharge = findLaborCharges(null, licensePlate, basicServiceDetailsQuery); // TODO: modify
+
+		// Finding car make & model for license plate
+		String carQuery = "select CAR_MAKE, CAR_MODEL from CAR where LICENSE_NO = '" + licensePlate + "'";
+		Application.rs = Application.stmt.executeQuery(carQuery);
+		String carMake = "", carModel = "";
+		while(Application.rs.next()) {
+			carMake = Application.rs.getString("CAR_MAKE");
+			carModel = Application.rs.getString("CAR_MODEL");
+		}
+
+		// Based on list of basic service - find parts required
+		Map<Integer, Integer> parts = new HashMap<>();
+		for(int basicServiceID : basicServicesIDs) {
+			String partsQuery = "select * from basic_services_parts where basic_service_id = " + basicServiceID + " and UPPER(car_make) = UPPER('" + carMake + "') and UPPER(car_model) = UPPER('" + carModel + "')";
+			Application.rs = Application.stmt.executeQuery(partsQuery);
+			while(Application.rs.next()) {
+				int partID = Application.rs.getInt("part_id");
+				int qty = Application.rs.getInt("quantity");
+				parts.put(partID, qty);
+			}
+		}
+
+		Map<Date, Map<String[], Integer>> datesResult = findServiceDates(totalTime, mechanicName, false);
+
+		Map<String, Map<Integer, Integer>> scParts = getSCParts(parts);
+		int partsFound = 0;
+		for(String sc : scParts.keySet()) {
+			Map<Integer, Integer> partsMap = scParts.get(sc);
+			partsFound += partsMap.size();
+		}
+		//scheduleMaintenance2(datesResult, licensePlate, currentMileage, mechanicName, totalTime, serviceType, laborCharge, scParts);
+		if(partsFound != parts.size()) {
+			System.out.println("Insufficient parts. Please try again after " + dateFormat.format(lastDay).toUpperCase() + ".");
+		} else if(datesResult.size() == 2) {
+			scheduleRepair2(problem, datesResult, licensePlate, currentMileage, mechanicName, laborCharge, totalTime, scParts);
+			//scheduleMaintenance2(datesResult, licensePlate, currentMileage, mechanicName, totalTime, serviceType, laborCharge, scParts);
+		}
+	}
 
     private Map<String, Map<Integer, Integer>> getSCParts(Map<Integer, Integer> parts) throws Exception {
 
@@ -1550,11 +1621,8 @@ for(int k=0;k<servicesIDs.size();k++)
         System.out.println("Enter option: ");
         int option = scanner.nextInt();
         if(option >= 1 && option <= 7) {
-            displayDiagnosticReport(option, licensePlate);
-            List<Date> dates = findRepairDates(licensePlate, currentMileage, mechanicName);
-            if(dates.size() == 2) {
-                scheduleRepair2(option, dates, licensePlate, currentMileage, mechanicName);
-            } else {
+			scheduleRepairProcess(option, licensePlate, currentMileage, mechanicName);
+ //else {
                 // If parts are not sufficient
 /*                if(!checkPartsSufficient()) {
                     // Check if an order exists that fulfills this requirement; If it doesn't - place the order
@@ -1565,7 +1633,7 @@ for(int k=0;k<servicesIDs.size();k++)
                     System.out.println("Please try again after " + orderFulfilledDate.toString());
                     scheduleService();
                 }*/
-            }
+           // }
         } else if(option == 8) {
             scheduleService();
         } else {
@@ -1575,13 +1643,22 @@ for(int k=0;k<servicesIDs.size();k++)
     }
 
     // Customer: Schedule Repair (Page 2)
-    private void scheduleRepair2(int problem, List<Date> dates, String licensePlate, int currentMileage, String mechanicName) throws Exception {
+    private void scheduleRepair2(int problem, Map<Date, Map<String[], Integer>> datesResult, String licensePlate, int currentMileage, String mechanicName, float laborCharge, float totalTime, Map<String, Map<Integer, Integer>> scParts) throws Exception {
+    	displayDiagnosticReport(problem, licensePlate);
         System.out.println("\nSCHEDULE REPAIR (Page 2):");
         displayDiagnosticReport(problem, licensePlate);
         System.out.println("Repair dates: ");
-        System.out.println("\t1. " + dates.get(0).toString());
-        System.out.println("\t2. " + dates.get(1).toString());
-        System.out.println("Mechanic name: " + mechanicName);
+		Set<Date> dates = datesResult.keySet();
+		Map<Integer, Date> dateMap = new HashMap<>();
+		int i = 1;
+		for(Date date : dates) {
+			System.out.println("\t" + i + ". " + dateFormat.format(date));
+			dateMap.put(i, date);
+			i++;
+		}
+		if(mechanicName != null && !mechanicName.trim().isEmpty()) {
+			System.out.println("Mechanic name: " + mechanicName);
+		}
         System.out.println("MENU:");
         System.out.println("\t1. Repair on Date");
         System.out.println("\t2. Go Back");
@@ -1592,11 +1669,12 @@ for(int k=0;k<servicesIDs.size();k++)
                 System.out.println("Choose one of the service dates listed above (enter 1 or 2): ");
                 int dateNum = scanner.nextInt();
                 if(dateNum == 1 || dateNum == 2) {
-                    createRepairService(dates.get(dateNum-1), licensePlate, currentMileage, mechanicName);
+                    //createRepairService(datesResult, dateMap.get(dateNum), licensePlate, currentMileage, mechanicName);
+					createRepairService(datesResult, dateMap.get(dateNum), licensePlate, laborCharge, totalTime, scParts);
                     scheduleService();
                 } else {
                     System.out.println("Invalid date chosen. Try again.");
-                    scheduleRepair2(problem, dates, licensePlate, currentMileage, mechanicName);
+                    scheduleRepair2(problem, datesResult, licensePlate, currentMileage, mechanicName, laborCharge, totalTime, scParts);
                 }
                 break;
             case 2:
@@ -1638,19 +1716,88 @@ for(int k=0;k<servicesIDs.size();k++)
 		}
     }
 
-    // TODO: find two earliest available repair dates
-    // (Comes under Customer: Schedule Repair (Page 1))
-    private List<Date> findRepairDates(String licensePlate, int currentMileage, String mechanicName) throws Exception {
-        List<Date> dates = new ArrayList<Date>();
-
-        return dates;
-    }
-
-    // TODO: create a new service record for repair service for given date
-    // Insert into db
     // (For Customer: Schedule Repair (Page 2))
-    private void createRepairService(Date date, String licensePlate, int currentMileage, String mechanicName) throws Exception {
+    private void createRepairService(Map<Date, Map<String[], Integer>> datesResult, Date chosenDate, String licensePlate, float laborCharge, float totalTime, Map<String, Map<Integer, Integer>> scParts) throws Exception {
 
+		// Get last service ID
+		String lastServiceQuery = "select MAX(SERVICE_ID) from SERVICES";
+		Application.rs = Application.stmt.executeQuery(lastServiceQuery);
+		int serviceID = 0;
+		while(Application.rs.next()) {
+			serviceID = Application.rs.getInt("MAX(SERVICE_ID)");
+			break;
+		}
+		++serviceID;
+
+		// Insert : SERVICES
+		String insertService = "insert into SERVICES(SERVICE_ID, LABOR_CHARGE, ESTIMATED_HOURS) values(" + serviceID + ", " + laborCharge + ", " + totalTime + ")";
+		Application.stmt.executeUpdate(insertService);
+
+		// Insert : SERVICERELN
+		String insertServiceReln = "insert into SERVICERELN(LICENSE_NO, CUSTOMER_ID, SERVICE_ID) values('" + licensePlate +"', " + this.userID + ", " + serviceID + ")";
+		Application.stmt.executeUpdate(insertServiceReln);
+
+		//TODO: populate repair table
+
+/*
+		// Get last repair ID
+		String lastMaintQuery = "select MAX(MAINTENANCE_ID) from MAINTENANCE";
+		Application.rs = Application.stmt.executeQuery(lastMaintQuery);
+		int maintenanceID = 0;
+		while(Application.rs.next()) {
+			maintenanceID = Application.rs.getInt("MAX(MAINTENANCE_ID)");
+			break;
+		}
+		++maintenanceID;
+
+		// Insert : REPAIR
+		String insertMaintenance = "insert into MAINTENANCE(MAINTENANCE_ID, MAINTENANCE_TYPE, SERVICE_ID) values(" + maintenanceID + ", '" + serviceType + "', " + serviceID + ")";
+		Application.stmt.executeUpdate(insertMaintenance);
+*/
+
+		// Get last appointment ID
+		String lastApp = "select MAX(APPOINTMENT_ID) from APPOINTMENT";
+		Application.rs = Application.stmt.executeQuery(lastApp);
+		int appID = 0;
+		while(Application.rs.next()) {
+			appID = Application.rs.getInt("MAX(APPOINTMENT_ID)");
+			break;
+		}
+		++appID;
+
+		// Insert : APPOINTMENT
+		String insertAppointment = "insert into APPOINTMENT(APPOINTMENT_ID, SERVICE_TYPE, CUSTOMER_ID, SC_ID) values(" + appID + ", '', " + this.userID + ", '" + findCustomerServiceCenter() + "')";
+		Application.stmt.executeUpdate(insertAppointment);
+
+		// Insert : TIMESLOT
+		Map<String[], Integer> resultMap = datesResult.get(chosenDate);
+		String[] timings = new String[2];
+		for(String[] keys : resultMap.keySet()) {
+			timings = keys;
+			break;
+		}
+		String startTime = timings[0];
+		String endTime = timings[1];
+		int mechanicID = resultMap.get(timings);
+		String insertTimeslot = "insert into TIMESLOT(SERVICE_ID, SERVICE_DATE, SERVICE_TIME, MECHANIC_ID, END_DATE, END_TIME) values(" + serviceID + ", '" + dateFormat.format(chosenDate).toUpperCase() + "', '" + startTime + "', " + mechanicID + ", '" + dateFormat.format(chosenDate).toUpperCase() + "', '" + endTime + "')";
+		Application.stmt.executeUpdate(insertTimeslot);
+
+		System.out.println("Repair service scheduled successfully.");
+		System.out.println("Date: " + dateFormat.format(chosenDate).toUpperCase());
+		System.out.println("Start Time: " + startTime);
+		System.out.println("End Time: " + endTime);
+		System.out.println("Mechanic ID: " + mechanicID);
+
+		// Decrementing parts in inventory
+		for(String sc : scParts.keySet()) {
+			Map<Integer, Integer> partsMap = scParts.get(sc);
+			for(int partID : partsMap.keySet()) {
+				if(partID == 7) continue;
+				int qty = partsMap.get(partID);
+				String update = "update INVENTORY set CURRENT_QTY = (CURRENT_QTY - " + qty + ") where SC_ID = '" + sc + "' and PART_ID = " + partID;
+				Application.stmt.executeUpdate(update);
+			}
+		}
     }
 
     // (For Customer: Invoice)
@@ -1883,14 +2030,18 @@ for(int k=0;k<servicesIDs.size();k++)
 
     private float findLaborCharges(String serviceType, String licensePlate, String basicServiceDetailsQuery) throws Exception {
         float laborCharge = 0.0F;
-        // Check if this type of service is provided for first time. If yes - laborCharge = 0; Else - calculate
-        String prevServQuery = "select MAINTENANCE_TYPE from SERVICERELN inner join MAINTENANCE on SERVICERELN.SERVICE_ID = MAINTENANCE.SERVICE_ID where CUSTOMER_ID = " + this.userID + " and LICENSE_NO = '" + licensePlate + "' and MAINTENANCE_TYPE = '" + serviceType + "'";
-        Application.rs = Application.stmt.executeQuery(prevServQuery);
-        boolean firstTime = true;
-        while(Application.rs.next()) {
-            firstTime = false;
-            break;
-        }
+		boolean firstTime = true;
+        if(serviceType != null && !serviceType.isEmpty()) {
+			// Check if this type of service is provided for first time. If yes - laborCharge = 0; Else - calculate
+			String prevServQuery = "select MAINTENANCE_TYPE from SERVICERELN inner join MAINTENANCE on SERVICERELN.SERVICE_ID = MAINTENANCE.SERVICE_ID where CUSTOMER_ID = " + this.userID + " and LICENSE_NO = '" + licensePlate + "' and MAINTENANCE_TYPE = '" + serviceType + "'";
+			Application.rs = Application.stmt.executeQuery(prevServQuery);
+
+			while(Application.rs.next()) {
+				firstTime = false;
+				break;
+			}
+		}
+
         if(firstTime) {
             laborCharge = 0.0F;
         } else {
