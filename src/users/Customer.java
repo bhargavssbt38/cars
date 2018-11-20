@@ -983,18 +983,34 @@ for(int k=0;k<servicesIDs.size();k++)
     	{Application.rs=Application.stmt.executeQuery("select service_date from timeslot where service_id="+service_id.get(i));
     	  
     	  while(Application.rs.next())
-    	  {Date temp;
+    	  {//SimpleDateFormat tmp=new SimpleDateFormat("dd-MMM-yy");
+    	    Date temp;
     	   temp=Application.rs.getDate("service_date");
     	   
     	   if(date.before(temp))
-    	   { 
-    	   upcoming_services.add(temp);
+    	   {   	   upcoming_services.add(temp);
     	   }  
     	  }
+    	}
+    	List<Integer>sid=new ArrayList();
+    	SimpleDateFormat sdf=new SimpleDateFormat("dd-MMM-yy");
+    	
+    	
+    	for(int a=0;a<upcoming_services.size();a++)
+    	{  String s=sdf.format(upcoming_services.get(a));
+    		String query= "select service_id from timeslot where service_date='"+s+"'";
+    		System.out.println("Query" +query);
+    	    Application.rs=Application.stmt.executeQuery(query);
+    	    while(Application.rs.next())
+    	    {
+    		int service=Application.rs.getInt("service_id");
+    		sid.add(service);
+    	}
     	}
     	System.out.println("Upcoming Services for this customer" +id);
   	  for(int j=0;j<upcoming_services.size();j++)
   	  {System.out.println(upcoming_services.get(j));
+  	   System.out.print("\t" +sid.get(j));
   		  
   	  }
 
