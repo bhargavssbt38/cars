@@ -357,15 +357,16 @@ public class Customer extends User {
     	int year=startdate.getYear();
     	int month=startdate.getMonth();
     	int date=startdate.getDate();
-    	c1.set(year, month, date);
-    	
-    	Calendar currentdate=Calendar.getInstance();
+    	java.sql.Date d1=new java.sql.Date(year, month, date);
+    	    	
+    	long millis=System.currentTimeMillis();  
+    	java.sql.Date currentdate=new java.sql.Date(millis); 
     	
     	List<String>inwarranty=new ArrayList();
     	for(int l=0;l<warranty.size();l++)
     	{
     	 c1.add(month, warranty.get(l));
-    	 if(currentdate.before(c1))
+    	 if(currentdate.before(d1))
     	 {String temp;
     		 temp="Yes";
     		 
@@ -878,6 +879,7 @@ for(int k=0;k<servicesIDs.size();k++)
 
     // Customer: Reschedule Service (Page 1)
     private void rescheduleService() throws Exception {
+    	String id=Application.currentUser.userID;
         System.out.println("\nRESCHEDULE SERVICE (Page 1):");
         System.out.println("Your upcoming services:");
         displayUpcomingServices();
@@ -959,6 +961,42 @@ for(int k=0;k<servicesIDs.size();k++)
     //D. Service Type(Maintenance/Repair)
     //E. Service Details (Service A/B/C or Problem)
     private void displayUpcomingServices() throws Exception {
+    	String id=Application.currentUser.userID;
+    	long millis=System.currentTimeMillis();  
+    	java.sql.Date date=new java.sql.Date(millis);  
+    	System.out.println("Current Date"+date); 
+    	//System.out.println("The current date is"+dateFormat.format(currentdate));
+    	Application.rs=Application.stmt.executeQuery("select license_no, service_id from servicereln where customer_id='"+id+"'");
+    	List<String>license_no=new ArrayList();
+    	List<Integer>service_id = new ArrayList();
+    	while(Application.rs.next())
+    	{ String temp;
+    	  int temp1;
+    	  temp=Application.rs.getString("license_no");
+    	  temp1=Application.rs.getInt("service_id");
+    	  license_no.add(temp);
+    	  service_id.add(temp1);
+    	}
+    	List<Date>upcoming_services=new ArrayList();
+    	
+    	for(int i=0;i<service_id.size();i++)
+    	{Application.rs=Application.stmt.executeQuery("select service_date from timeslot where service_id="+service_id.get(i));
+    	  
+    	  while(Application.rs.next())
+    	  {Date temp;
+    	   temp=Application.rs.getDate("service_date");
+    	   
+    	   if(date.before(temp))
+    	   { 
+    	   upcoming_services.add(temp);
+    	   }  
+    	  }
+    	}
+    	System.out.println("Upcoming Services for this customer" +id);
+  	  for(int j=0;j<upcoming_services.size();j++)
+  	  {System.out.println(upcoming_services.get(j));
+  		  
+  	  }
 
     }
 
