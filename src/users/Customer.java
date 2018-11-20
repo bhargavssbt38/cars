@@ -1339,7 +1339,7 @@ for(int k=0;k<servicesIDs.size();k++)
         return scParts;
     }
 
-/*    // TODO: query db & check if an order exists that satisfies parts requirements
+/*    // query db & check if an order exists that satisfies parts requirements
     // Return the date when order will be fulfilled
     // If no such order exists - return null
     private Date getExistingOrderForPartsDate() throws Exception {
@@ -1348,7 +1348,7 @@ for(int k=0;k<servicesIDs.size();k++)
         return orderDate;
     }
 
-    // TODO: insert into db new order for parts required
+    // insert into db new order for parts required
     // Return the date when the order will be fulfilled
     private Date placeOrder() throws Exception {
 
@@ -1376,7 +1376,6 @@ for(int k=0;k<servicesIDs.size();k++)
         String insertServiceReln = "insert into SERVICERELN(LICENSE_NO, CUSTOMER_ID, SERVICE_ID) values('" + licensePlate +"', " + this.userID + ", " + serviceID + ")";
         Application.stmt.executeUpdate(insertServiceReln);
 
-
         // Get last maintenance ID
         String lastMaintQuery = "select MAX(MAINTENANCE_ID) from MAINTENANCE";
         Application.rs = Application.stmt.executeQuery(lastMaintQuery);
@@ -1390,6 +1389,7 @@ for(int k=0;k<servicesIDs.size();k++)
         // Insert : MAINTENANCE
         String insertMaintenance = "insert into MAINTENANCE(MAINTENANCE_ID, MAINTENANCE_TYPE, SERVICE_ID) values(" + maintenanceID + ", '" + serviceType + "', " + serviceID + ")";
         Application.stmt.executeUpdate(insertMaintenance);
+
 
         // Get last appointment ID
         String lastApp = "select MAX(APPOINTMENT_ID) from APPOINTMENT";
@@ -1432,7 +1432,6 @@ for(int k=0;k<servicesIDs.size();k++)
                 if(partID == 7) continue;
                 int qty = partsMap.get(partID);
                 String update = "update INVENTORY set CURRENT_QTY = (CURRENT_QTY - " + qty + ") where SC_ID = '" + sc + "' and PART_ID = " + partID;
-                System.out.println(update);
                 Application.stmt.executeUpdate(update);
             }
         }
