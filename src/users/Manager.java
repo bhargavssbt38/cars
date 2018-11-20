@@ -395,7 +395,7 @@ public class Manager extends Employee {
     //TODO: Write a query to retrieve Order history.
     private void orderhistory() throws Exception{
     	System.out.println("Order History");
-
+        String scI = getScId();
     	String orderStmt = "select * from orders o, parts p, received_from r, distributor d, placed_to pl where o.part_id = p.part_id and o.order_id = r.order_id and r.distributor_id = d.distributor_id and o.order_id = pl.order_id and pl.sc_id = '"+getScId()+"'";
         Application.rs = Application.stmt.executeQuery(orderStmt);
     	String oid="",dt="",pname="",sname="",purchname="",qty="",unitPrice="",totCost="",oStatus="";
@@ -419,7 +419,7 @@ public class Manager extends Employee {
             System.out.println("2. Date: "+dt);
             System.out.println("3. Part Name: "+pname);
             System.out.println("4. Supplier Name: "+sname);
-            System.out.println("5. Purchaser Name: "+getScId());
+            System.out.println("5. Purchaser Name: "+scI);
             System.out.println("6. Quantity: "+qty);
             System.out.println("7. Unit Price: "+unitPrice);
             System.out.println("8. Total Cost: "+unitPrice);
