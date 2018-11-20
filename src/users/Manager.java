@@ -1,5 +1,7 @@
 package users;
 
+import java.text.*;
+import java.lang.*;
 import app.*;
 //import com.sun.org.apache.xpath.internal.operations.Bool;
 import pages.*;
@@ -394,7 +396,7 @@ public class Manager extends Employee {
     private void orderhistory() throws Exception{
     	System.out.println("Order History");
 
-    	String orderStmt = "select * from orders o, parts p, received_from r, distributor d where o.part_id = p.part_id and o.order_id = r.order_id and r.distributor_id = d.distributor_id";
+    	String orderStmt = "select * from orders o, parts p, received_from r, distributor d, placed_to pl where o.part_id = p.part_id and o.order_id = r.order_id and r.distributor_id = d.distributor_id and o.order_id = pl.order_id and pl.sc_id = '"+getScId()+"'";
         Application.rs = Application.stmt.executeQuery(orderStmt);
     	String oid="",dt="",pname="",sname="",purchname="",qty="",unitPrice="",totCost="",oStatus="";
 
@@ -417,7 +419,7 @@ public class Manager extends Employee {
             System.out.println("2. Date: "+dt);
             System.out.println("3. Part Name: "+pname);
             System.out.println("4. Supplier Name: "+sname);
-            System.out.println("5. Purchaser Name: ");
+            System.out.println("5. Purchaser Name: "+getScId());
             System.out.println("6. Quantity: "+qty);
             System.out.println("7. Unit Price: "+unitPrice);
             System.out.println("8. Total Cost: "+unitPrice);
@@ -452,26 +454,76 @@ public class Manager extends Employee {
     	System.out.println(" Please enter the quantity");
     	int quantity=scanner.nextInt();
 
-    	String createOrderStmt = "insert into orders (order_id,qty,order_date,order_status,part_id) values(";
+            String k = "select distributor_id,delivery_time from supplied_by where part_id = '"+partid+"'";
+            Application.rs = Application.stmt.executeQuery(k);
+            String estTime="",did="",chk="",oldDate="",newDate="";
+            while(Application.rs.next())
+            {
+
+                estTime = Application.rs.getString("delivery_time");
+                if(Application.rs.wasNull())
+                    estTime = "No estimated date";
+                did = Application.rs.getString("distributor_id");
+            }
+            if(estTime.equalsIgnoreCase(""))
+                estTime = "No estimated date";
+
+            if(estTime.equalsIgnoreCase("No estimated date")==false)
+            {   System.out.println("asdfsdf\n\n");
+                int et = Integer.parseInt(estTime);
+                Date d = new Date();
+                oldDate = new SimpleDateFormat("dd-MM-yyyy").format(d);
+                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                Calendar c = Calendar.getInstance();
+                try{
+                    //Setting the date to the given date
+                    c.setTime(sdf.parse(oldDate));
+                }catch(ParseException e){
+                    e.printStackTrace();
+                }
+
+                //Number of Days to add
+                c.add(Calendar.DAY_OF_MONTH, et);
+                //Date after adding the days to the given date
+                newDate = sdf.format(c.getTime());
+            }
+
+            System.out.println(oldDate + " " + newDate);
+
+            String createOrderStmt = "insert into orders (order_id,qty,order_date,order_status,part_id,expected_delivery_date) values(";
 
     	String countQuery = "select count(*) as C from orders";
     	Application.rs = Application.stmt.executeQuery(countQuery);
     	String ct = "";
+
     	while(Application.rs.next())
         {
             ct = Application.rs.getString("C");
+
         }
 
         ct = String.valueOf(Integer.parseInt(ct)+1);
         createOrderStmt+=ct;
-    	createOrderStmt += (","+quantity+",'11-11-2018','Pending',"+partid+")");
+        if(estTime.equalsIgnoreCase("No estimated date"))
+            createOrderStmt += (","+quantity+",'11-11-2018','Pending','"+partid+"','')");
+        else
+    	    createOrderStmt += (","+quantity+",'11-11-2018','Pending','"+partid+"','"+newDate+"')");
     	System.out.println(createOrderStmt);
-    	Application.rs = Application.stmt.executeQuery(createOrderStmt);
-    	System.out.println("The order has been successfully placed with order ID: "+ct+" and estimated date: ");
+    	int hh = Application.stmt.executeUpdate(createOrderStmt);
+    	System.out.println("The order has been successfully placed with order ID: "+ct);
 
     	//What happens next?
         String id = getScId();
-        int x = Application.stmt.executeUpdate("insert into placed_to(order_id,sc_id) values("+ct+","+id+")");
+        int x = Application.stmt.executeUpdate("insert into placed_to(order_id,sc_id) values('"+ct+"','"+id+"')");
+
+
+        if(estTime.equalsIgnoreCase("No estimated date"))
+            System.out.println("There is no estimated date of delivery");
+        else
+            System.out.println("Estimated time of delivery: "+newDate);
+
+        x = Application.stmt.executeUpdate("insert into received_from(order_id, distributor_id) values('"+ct+"','"+did+"')");
+
     	orders(); break;
     	case 2: orders(); break;
     	default: System.out.println("Invalid Option");System.exit(0);
@@ -483,13 +535,31 @@ public class Manager extends Employee {
 //Manager: Notifications
 
     private void notifications() throws Exception {
-       System.out.println("Notifications");
+       /*System.out.println("Notifications");
        System.out.println("1. Notification ID");
        System.out.println("2. Notification Date/Time");
        System.out.println("3. Order ID");
        System.out.println("4. Supplier Name");
        System.out.println("5. Expected Delivery Date");
-       System.out.println("6. Delayed by Number of Days");
+       System.out.println("6. Delayed by Number of Days");*/
+       // System.out.println(getScId());
+       Application.rs = Application.stmt.executeQuery("select notif_date,message,sc_id from notification");
+       while(Application.rs.next())
+       {
+           String date = Application.rs.getString("notif_date");
+           String message = Application.rs.getString("message");
+           String sc = Application.rs.getString("sc_id");
+           //System.out.println(getScId());
+           if(sc.equalsIgnoreCase(getScId()))
+           {
+               System.out.println("Date: "+date);
+               System.out.println("Message: "+message);
+               System.out.println("\n\n");
+           }
+           else continue;
+       }
+
+
        System.out.println("\n \n Menu");
        System.out.println("1. Order ID");
        System.out.println("2. Go back");
