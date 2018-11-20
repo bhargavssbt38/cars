@@ -543,14 +543,16 @@ public class Manager extends Employee {
        System.out.println("5. Expected Delivery Date");
        System.out.println("6. Delayed by Number of Days");*/
        // System.out.println(getScId());
+        String gg = getScId();
        Application.rs = Application.stmt.executeQuery("select notif_date,message,sc_id from notification");
+
        while(Application.rs.next())
        {
            String date = Application.rs.getString("notif_date");
            String message = Application.rs.getString("message");
            String sc = Application.rs.getString("sc_id");
            //System.out.println(getScId());
-           if(sc.equalsIgnoreCase(getScId()))
+           if(sc.equalsIgnoreCase(gg))
            {
                System.out.println("Date: "+date);
                System.out.println("Message: "+message);
@@ -1067,8 +1069,10 @@ public class Manager extends Employee {
         ResultSet rr = null;
         rr = sql.executeQuery("select service_id from services");
         while (rr.next()) {
+
+            //String id=Application.currentUser.userID;
+
             String serviceID = rr.getString("service_id");
-            System.out.println(serviceID);
             String chk = "select c.sc_id from servicereln s, customer c where s.customer_id = c.customer_id and s.service_id = '"+serviceID+"'";
             Application.rs = Application.stmt.executeQuery(chk);
             while(Application.rs.next())
@@ -1080,68 +1084,71 @@ public class Manager extends Employee {
                 System.out.println(serviceID+" not part of this service center!");
                 continue;
             }
-            Application.rs = Application.stmt.executeQuery("select license_no from servicereln where service_id=" + serviceID);
-            String license_no = null;
-            while (Application.rs.next()) {
-                license_no = Application.rs.getString("license_no");
+            Application.rs=Application.stmt.executeQuery("select license_no from servicereln where service_id="+serviceID);
+            String license_no=null;
+            while(Application.rs.next())
+            {license_no=Application.rs.getString("license_no");
 
             }
-            String car_make = null, car_model = null;
-            Application.rs = Application.stmt.executeQuery("select car_make,car_model from car where license_no='" + license_no + "'");
-            while (Application.rs.next()) {
-                car_make = Application.rs.getString("car_make");
+            String car_make = null,car_model=null;
+            Application.rs=Application.stmt.executeQuery("select car_make,car_model from car where license_no='"+license_no+"'");
+            while(Application.rs.next())
+            {
+                car_make=Application.rs.getString("car_make");
 
-                car_model = Application.rs.getString("car_model");
+                car_model=Application.rs.getString("car_model");
             }
 
             Date startdate = null;
-            Application.rs = Application.stmt.executeQuery("select service_date from timeslot where service_id=" + serviceID);
-            while (Application.rs.next()) {
-                startdate = Application.rs.getDate("service_date");
+            Application.rs=Application.stmt.executeQuery("select service_date from timeslot where service_id="+serviceID);
+            while(Application.rs.next())
+            {startdate=Application.rs.getDate("service_date");
             }
 
-            int lookup_id = 0;
+            int lookup_id=0;
 
-            String make = car_make.toLowerCase();
-            String model = car_model.toLowerCase();
-            Application.rs = Application.stmt.executeQuery("select lookup_id from service_type_lookup where car_make='" + make + "' AND car_model='" + model + "'");
-            System.out.println("The car make" + (make));
-            System.out.println("The car model" + (model));
-
-
-            while (Application.rs.next()) {
-                lookup_id = Application.rs.getInt("lookup_id");
-
-            }
+            String make=car_make.toLowerCase();
+            String model=car_model.toLowerCase();
+            Application.rs=Application.stmt.executeQuery("select lookup_id from service_type_lookup where car_make='"+make+"' AND car_model='"+model+"'");
+            System.out.println("The car make"+(make));
+            System.out.println("The car model"+(model));
 
 
-            Application.rs = Application.stmt.executeQuery("select maintenance_type from maintenance where service_id=" + serviceID);
-            String type = null;
-            while (Application.rs.next()) {
-                type = Application.rs.getString("maintenance_type");
+            while(Application.rs.next())
+            {
+                lookup_id=Application.rs.getInt("lookup_id");
 
             }
-            List<Integer> bid = new ArrayList();
 
 
-            Application.rs = Application.stmt.executeQuery("select basic_service_id from service_type_services where service_type='" + type + "'AND lookup_id=" + lookup_id);
-            int basicid = 0;
-            while (Application.rs.next()) {
-                basicid = Application.rs.getInt("basic_service_id");
+            Application.rs=Application.stmt.executeQuery("select maintenance_type from maintenance where service_id="+serviceID);
+            String type=null;
+            while(Application.rs.next())
+            {type=Application.rs.getString("maintenance_type");
+
+            }
+            List<Integer>bid=new ArrayList();
+
+
+            Application.rs=Application.stmt.executeQuery("select basic_service_id from service_type_services where service_type='"+type+"'AND lookup_id="+lookup_id);
+            int basicid=0;
+            while(Application.rs.next())
+            {basicid=Application.rs.getInt("basic_service_id");
                 bid.add(basicid);
 
             }
 
 
-            List<Integer> part = new ArrayList();
-            List<Integer> quantity = new ArrayList();
+            List<Integer>part=new ArrayList();
+            List<Integer>quantity=new ArrayList();
 
-            for (int i = 0; i < bid.size(); i++) {
-                Application.rs = Application.stmt.executeQuery("select part_id,quantity from basic_services_parts where basic_service_id=" + bid.get(i) + "AND car_make='" + car_make + "' AND car_model='" + car_model + "'");
-                int parts = 0, count = 0;
-                while (Application.rs.next()) {
-                    parts = Application.rs.getInt("part_id");
-                    count = Application.rs.getInt("quantity");
+            for(int i=0;i<bid.size();i++)
+            { Application.rs=Application.stmt.executeQuery("select part_id,quantity from basic_services_parts where basic_service_id="+bid.get(i)+"AND car_make='"+car_make+"' AND car_model='"+car_model+"'");
+                int parts=0,count=0;
+                while(Application.rs.next())
+                {
+                    parts=Application.rs.getInt("part_id");
+                    count=Application.rs.getInt("quantity");
                     part.add(parts);
                     quantity.add(count);
                 }
@@ -1149,103 +1156,114 @@ public class Manager extends Employee {
 
             }
 
-            List<String> servicename = new ArrayList();
-            List<String> rate = new ArrayList();
-            List<Float> hours = new ArrayList();
-            for (int k = 0; k < bid.size(); k++) {
-                Application.rs = Application.stmt.executeQuery("select service_name,rate,time_hours from basic_services where basic_service_id=" + bid.get(k));
-                while (Application.rs.next()) {
-                    String sname = Application.rs.getString("service_name");
-                    String cost = Application.rs.getString("rate");
-                    float time = Application.rs.getFloat("time_hours");
+            List<String>servicename=new ArrayList();
+            List<String>rate=new ArrayList();
+            List<Float>hours=new ArrayList();
+            for(int k=0;k<bid.size();k++)
+            {
+                Application.rs=Application.stmt.executeQuery("select service_name,rate,time_hours from basic_services where basic_service_id="+bid.get(k));
+                while(Application.rs.next())
+                {
+                    String sname=Application.rs.getString("service_name");
+                    String cost=Application.rs.getString("rate");
+                    float time=Application.rs.getFloat("time_hours");
                     servicename.add(sname);
                     rate.add(cost);
                     hours.add(time);
                 }
             }
 
-            float totalcost = 0;
-            List<Float> servicecost = new ArrayList();
-            List<Float> partcost = new ArrayList();
-            List<Integer> warranty = new ArrayList();
-            float pcost = 0;
-            int months = 0;
-            for (int a = 0; a < part.size(); a++) {
-                Application.rs = Application.stmt.executeQuery("select warranty,price from parts where part_id=" + part.get(a));
-                while (Application.rs.next()) {
-                    pcost = Application.rs.getFloat("price");
-                    months = Application.rs.getInt("warranty");
+            float totalcost=0;
+            List<Float>servicecost=new ArrayList();
+            List<Float>partcost=new ArrayList();
+            List<Integer>warranty=new ArrayList();
+            float pcost=0;
+            int months=0;
+            for(int a=0;a<part.size();a++)
+            {
+                Application.rs=Application.stmt.executeQuery("select warranty,price from parts where part_id="+part.get(a));
+                while(Application.rs.next())
+                {
+                    pcost=Application.rs.getFloat("price");
+                    months=Application.rs.getInt("warranty");
                     partcost.add(pcost);
                     warranty.add(months);
                 }
             }
 
-            Calendar c1 = Calendar.getInstance();
+            Calendar c1=Calendar.getInstance();
 
-            int year = startdate.getYear();
-            int month = startdate.getMonth();
-            int date = startdate.getDate();
-            c1.set(year, month, date);
+            int year=startdate.getYear();
+            int month=startdate.getMonth();
+            int date=startdate.getDate();
+            java.sql.Date d1=new java.sql.Date(year, month, date);
 
-            Calendar currentdate = Calendar.getInstance();
+            long millis=System.currentTimeMillis();
+            java.sql.Date currentdate=new java.sql.Date(millis);
 
-            List<String> inwarranty = new ArrayList();
-            for (int l = 0; l < warranty.size(); l++) {
+            List<String>inwarranty=new ArrayList();
+            for(int l=0;l<warranty.size();l++)
+            {
                 c1.add(month, warranty.get(l));
-                if (currentdate.before(c1)) {
-                    String temp;
-                    temp = "Yes";
+                if(currentdate.before(d1))
+                {String temp;
+                    temp="Yes";
 
                     inwarranty.add(temp);
-                } else {
+                }else
+                {
                     inwarranty.add("Warranty Expired");
                 }
             }
-            for (int b = 0; b < bid.size(); b++) {
-                float temp = 0;
-                float temp1 = 0;
-                temp = quantity.get(b) * partcost.get(b);
-                if (rate.get(b).equalsIgnoreCase("low")) {
-                    temp1 = 50;
-                } else {
-                    temp1 = 65;
+            for(int b=0;b<bid.size();b++)
+            {
+                float temp=0;
+                float temp1=0;
+                temp=quantity.get(b)*partcost.get(b);
+                if(rate.get(b).equalsIgnoreCase("low"))
+                {
+                    temp1=50;
+                }else
+                {
+                    temp1=65;
                 }
-                if (inwarranty.get(b).equalsIgnoreCase("Yes")) {
-                    float temp2 = 0;
+                if(inwarranty.get(b).equalsIgnoreCase("Yes"))
+                {
+                    float temp2=0;
                     servicecost.add(b, temp);
 
-                } else {
-                    temp1 += temp1 * hours.get(b);
-                    servicecost.add(temp + temp1);
-                }
-                totalcost += servicecost.get(b);
+                }else
+                {temp1+=temp1*hours.get(b);
+                    servicecost.add(temp+temp1);
+                }totalcost+=servicecost.get(b);
             }
             System.out.println("Basic service ID, Service Name, Part_id, quantity, Rate of labor, hours required, Part Cost, Warranty,ServiceCost InWarranty/Expired Warranty ");
-            for (int j = 0; j < bid.size(); j++) {
-                System.out.println();
-                System.out.print("\t" + bid.get(j));
-                System.out.print("\t" + servicename.get(j));
-                System.out.print("\t" + part.get(j));
-                System.out.print("\t" + quantity.get(j));
-                System.out.print("\t" + rate.get(j));
-                System.out.print("\t" + hours.get(j));
-                System.out.print("\t" + partcost.get(j));
-                System.out.print("\t" + warranty.get(j));
-                System.out.print("\t" + servicecost.get(j));
-                System.out.print("\t" + inwarranty.get(j));
+            for(int j=0;j<bid.size();j++)
+            {  System.out.println();
+                System.out.print("\t"+bid.get(j));
+                System.out.print("\t"+servicename.get(j));
+                System.out.print("\t"+part.get(j));
+                System.out.print("\t"+quantity.get(j));
+                System.out.print("\t"+rate.get(j));
+                System.out.print("\t"+hours.get(j));
+                System.out.print("\t" +partcost.get(j));
+                System.out.print("\t" +warranty.get(j));
+                System.out.print("\t"+servicecost.get(j));
+                System.out.print("\t"+inwarranty.get(j));
+
 
 
             }
-            float totalhours = 0;
+            float totalhours=0;
 
-            for (int c = 0; c < hours.size(); c++) {
-                totalhours += hours.get(c);
+            for(int c=0;c<hours.size();c++)
+            {totalhours+=hours.get(c);
 
             }
             System.out.print("\n");
-            System.out.println("The total number of labor hours involved in this service: " + totalhours);
-            System.out.println("The total cost involved in this service: " + totalcost);
-            Application.rs = Application.stmt.executeQuery("select employee.emp_name,servicereln.license_no,servicereln.service_id,repair.actual_fees,repair.diagnostic_fees,repair.repair_id,timeslot.mechanic_id,timeslot.service_date,timeslot.service_time,timeslot.end_date,timeslot.end_time from employee,repair,servicereln,timeslot,mechanic where servicereln.service_id='" + serviceID + "' AND timeslot.service_id=servicereln.service_id AND servicereln.service_id = repair.service_id AND timeslot.mechanic_id= mechanic.mechanic_id AND mechanic.emp_id=employee.emp_id");
+            System.out.println("The total number of labor hours involved in this service: "+totalhours);
+            System.out.println("The total cost involved in this service: " +totalcost);
+            Application.rs=Application.stmt.executeQuery("select employee.emp_name,servicereln.license_no,servicereln.service_id,repair.actual_fees,repair.diagnostic_fees,repair.repair_id,timeslot.mechanic_id,timeslot.service_date,timeslot.service_time,timeslot.end_date,timeslot.end_time from employee,repair,servicereln,timeslot,mechanic where servicereln.service_id='"+serviceID+"' AND timeslot.service_id=servicereln.service_id AND servicereln.service_id = repair.service_id AND timeslot.mechanic_id= mechanic.mechanic_id AND mechanic.emp_id=employee.emp_id");
 
             while (Application.rs.next()) {
 
@@ -1254,80 +1272,70 @@ public class Manager extends Employee {
                 String service_id = Application.rs.getString("service_id");
                 String repair_id = Application.rs.getString("repair_id");
                 String mechanic_id = Application.rs.getString("mechanic_id");
-                Float actual_fees = Application.rs.getFloat("actual_fees");
-                Float diagnostic_fees = Application.rs.getFloat("diagnostic_fees");
-                Float totalfees = actual_fees + diagnostic_fees;
+                Float actual_fees=Application.rs.getFloat("actual_fees");
+                Float diagnostic_fees=Application.rs.getFloat("diagnostic_fees");
+                Float totalfees=actual_fees+diagnostic_fees;
                 Date start_date = Application.rs.getDate("service_date");
-                String start_time = Application.rs.getString("service_time");
-                Date end_date = Application.rs.getDate("end_date");
-                String end_time = Application.rs.getString("end_time");
-                //System.out.println("The Customer ID is:" + id);
-                System.out.println("The Service ID for the service is:" + service_id);
-                System.out.println("The License Plate for the car in this service is:" + license);
+                String start_time=Application.rs.getString("service_time");
+                Date end_date=Application.rs.getDate("end_date");
+                String end_time=Application.rs.getString("end_time");
+                // System.out.println("The Customer ID is:" +id);
+                System.out.println("The Service ID for the service is:" +service_id);
+                System.out.println("The License Plate for the car in this service is:" +license);
                 System.out.println("The Service Type involved in this Service is Repair");
-                System.out.println("The Mechanic Involved in this service is: " + mechanic_name);
-                System.out.println("This Service Started on: " + start_date);
-                System.out.println("Start Time:" + start_time);
+                System.out.println("The Mechanic Involved in this service is: " +mechanic_name);
+                System.out.println("This Service Started on: "+start_date);
+                System.out.println("Start Time:"+start_time);
 
 
-                if (end_time == null || end_time.isEmpty()) {
+                if(end_time== null || end_time.isEmpty())
+                {
                     System.out.println(" The Status of this Service is still ongoing");
-                } else
-                    System.out.println("This service is completed and ended on" + end_date + " end time" + end_time);
-                System.out.println("The total service cost involved in this service:" + totalfees);
+                }
+                else
+                    System.out.println("This service is completed and ended on"+end_date+" end time" +end_time);
+                System.out.println("The total service cost involved in this service:"+totalfees);
+
+
+                System.out.println("\n\n\n");
+
+
+
+            }
+            Application.rs=Application.stmt.executeQuery("select employee.emp_name,servicereln.license_no,servicereln.service_id,maintenance.maintenance_id,timeslot.mechanic_id,timeslot.service_date,timeslot.service_time,timeslot.end_date,timeslot.end_time from employee, mechanic,maintenance,servicereln,timeslot where servicereln.service_id='"+serviceID+"' AND timeslot.service_id=servicereln.service_id AND servicereln.service_id = maintenance.service_id AND timeslot.mechanic_id=mechanic.mechanic_id AND mechanic.emp_id=employee.emp_id");
+            while(Application.rs.next())
+            {String mechanic_name1 = Application.rs.getString("emp_name");
+                String license1 = Application.rs.getString("license_no");
+                String service_id1 = Application.rs.getString("service_id");
+                String maintenance_id1 = Application.rs.getString("maintenance_id");
+                String mechanic_id1 = Application.rs.getString("mechanic_id");
+                Date start_date1 = Application.rs.getDate("service_date");
+                String start_time1=Application.rs.getString("service_time");
+                Date end_date1=Application.rs.getDate("end_date");
+                String end_time1=Application.rs.getString("end_time");
+                //System.out.println("The Customer ID is:" +id);
+                System.out.println("The Service ID for the service is:" +service_id1);
+                System.out.println("The License Plate for the car in this service is:" +license1);
+                System.out.println("The Service Type involved in this Service is Maintenance");
+                System.out.println("The Mechanic Involved in this service is: " +mechanic_name1);
+                System.out.println("This Service Started on: "+start_date1);
+                System.out.println("Start Time:"+start_time1);
+
+
+                if(end_time1== null || end_time1.isEmpty())
+                {
+                    System.out.println(" The Status of this Service is still ongoing");
+                }
+                else
+                    System.out.println("This service is completed and ended on"+end_date1+" end time" +end_time1);
 
 
                 System.out.println("\n\n\n");
             }
-        /*
-
-        String invoiceQuery = "select s.service_id, c.customer_name, service_date, end_date, license_no, e.emp_name, p.part_name, p.price, labor_charge, estimated_hours from services s,customer c, timeslot t, servicereln sr, employee e, requires r, mechanic m, parts p where s.service_id = r.service_id and p.part_id = r.part_id and sr.service_id = s.service_id and sr.customer_id = c.customer_id and t.service_id = s.service_id and m.mechanic_id = t.mechanic_id and e.emp_id = m.emp_id order by s.service_id";
-        String sid = "", cname = "", sdate = "", edate = "", lno = "", stype = "", mname = "", p="", cost="", hrs = "", scost = "";
-        Application.rs = Application.stmt.executeQuery(invoiceQuery);
-        String flag = "";
-
-        while(Application.rs.next())
-        {
-            sid = Application.rs.getString("service_id");
-            cname = Application.rs.getString("customer_name");
-            sdate = Application.rs.getString("service_date");
-            edate = Application.rs.getString("end_date");
-
-            if(Application.rs.wasNull())
-                edate = "Still in progress";
-            lno = Application.rs.getString("license_no");
-            mname = Application.rs.getString("emp_name");
-            p = Application.rs.getString("part_name");
-            cost = Application.rs.getString("price");
-            hrs = Application.rs.getString("estimated_hours");
-            scost = Application.rs.getString("labor_charge");
-
-            Float totalCost = Float.parseFloat(hrs) * Float.parseFloat(scost);
-
-            if(sid.equalsIgnoreCase(flag))
-            {
-                System.out.println("Part name: " + p + " Cost: "+cost);
-            }
-            else
-            {
-                flag = sid;
-                System.out.println("Service id: "+sid);
-                System.out.println("Customer name: "+cname);
-                System.out.println("Start Date: "+sdate);
-                System.out.println("End Date: "+edate);
-                System.out.println("Car License No: "+lno);
-                System.out.println("Mechanic Name: "+mname);
-                System.out.println("Labor hours: "+hrs);
-                System.out.println("Charge per hour: "+scost);
-                System.out.println("Total Labor Charge: "+totalCost);
-                System.out.println("Parts Required:-");
-                System.out.println("Part name: " + p + " Cost: "+cost);
-            }
-
-        }
-        */
         }
     }
+
+
 
     private String getScId() throws Exception
     {
