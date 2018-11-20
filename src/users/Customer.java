@@ -1202,7 +1202,7 @@ for(int k=0;k<servicesIDs.size();k++)
         }
 
         // Based on list of basic service - find labor charge
-        float laborCharge = findLaborCharges(serviceType, licensePlate, basicServiceDetailsQuery);
+        float laborCharge = findLaborCharges(serviceType, 0, licensePlate, basicServiceDetailsQuery, true);
 
         Map<Date, Map<String[], Integer>> datesResult = findServiceDates(totalTime, mechanicName);
 
@@ -1415,7 +1415,7 @@ for(int k=0;k<servicesIDs.size();k++)
 		}
 
 		// Based on list of basic service - find labor charge
-		float laborCharge = findLaborCharges(null, licensePlate, basicServiceDetailsQuery); // TODO: modify
+		float laborCharge = findLaborCharges("", problem, licensePlate, basicServiceDetailsQuery, false);
 
 		// Finding car make & model for license plate
 		String carQuery = "select CAR_MAKE, CAR_MODEL from CAR where LICENSE_NO = '" + licensePlate + "'";
@@ -1438,6 +1438,21 @@ for(int k=0;k<servicesIDs.size();k++)
 			}
 		}
 
+		float partsCost = 0.0F;
+		// Find parts cost
+		for(int partID : parts.keySet()) {
+			int qty = parts.get(partID);
+			String partCost = "select PRICE from PARTS where PART_ID = '" + partID + "'";
+			Application.rs = Application.stmt.executeQuery(partCost);
+			while (Application.rs.next() ) {
+				float cost = Application.rs.getFloat("price");
+				partsCost += (cost * qty);
+
+			}
+		}
+
+		float actualFees = laborCharge + partsCost;
+
 		Map<Date, Map<String[], Integer>> datesResult = findServiceDates(totalTime, mechanicName, false);
 
 		Map<String, Map<Integer, Integer>> scParts = getSCParts(parts);
@@ -1450,7 +1465,7 @@ for(int k=0;k<servicesIDs.size();k++)
 		if(partsFound != parts.size()) {
 			System.out.println("Insufficient parts. Please try again after " + dateFormat.format(lastDay).toUpperCase() + ".");
 		} else if(datesResult.size() == 2) {
-			scheduleRepair2(problem, datesResult, licensePlate, currentMileage, mechanicName, laborCharge, totalTime, scParts);
+			scheduleRepair2(problem, datesResult, licensePlate, currentMileage, mechanicName, actualFees, laborCharge, totalTime, scParts);
 			//scheduleMaintenance2(datesResult, licensePlate, currentMileage, mechanicName, totalTime, serviceType, laborCharge, scParts);
 		}
 	}
@@ -1645,7 +1660,7 @@ for(int k=0;k<servicesIDs.size();k++)
     }
 
     // Customer: Schedule Repair (Page 2)
-    private void scheduleRepair2(int problem, Map<Date, Map<String[], Integer>> datesResult, String licensePlate, int currentMileage, String mechanicName, float laborCharge, float totalTime, Map<String, Map<Integer, Integer>> scParts) throws Exception {
+    private void scheduleRepair2(int problem, Map<Date, Map<String[], Integer>> datesResult, String licensePlate, int currentMileage, String mechanicName, float actualFees, float laborCharge, float totalTime, Map<String, Map<Integer, Integer>> scParts) throws Exception {
     	displayDiagnosticReport(problem, licensePlate);
         System.out.println("\nSCHEDULE REPAIR (Page 2):");
         displayDiagnosticReport(problem, licensePlate);
@@ -1672,11 +1687,11 @@ for(int k=0;k<servicesIDs.size();k++)
                 int dateNum = scanner.nextInt();
                 if(dateNum == 1 || dateNum == 2) {
                     //createRepairService(datesResult, dateMap.get(dateNum), licensePlate, currentMileage, mechanicName);
-					createRepairService(datesResult, dateMap.get(dateNum), licensePlate, laborCharge, totalTime, scParts);
+					createRepairService(problem, datesResult, dateMap.get(dateNum), licensePlate, actualFees, laborCharge, totalTime, scParts);
                     scheduleService();
                 } else {
                     System.out.println("Invalid date chosen. Try again.");
-                    scheduleRepair2(problem, datesResult, licensePlate, currentMileage, mechanicName, laborCharge, totalTime, scParts);
+                    scheduleRepair2(problem, datesResult, licensePlate, currentMileage, mechanicName, actualFees, laborCharge, totalTime, scParts);
                 }
                 break;
             case 2:
@@ -1719,7 +1734,7 @@ for(int k=0;k<servicesIDs.size();k++)
     }
 
     // (For Customer: Schedule Repair (Page 2))
-    private void createRepairService(Map<Date, Map<String[], Integer>> datesResult, Date chosenDate, String licensePlate, float laborCharge, float totalTime, Map<String, Map<Integer, Integer>> scParts) throws Exception {
+    private void createRepairService(int problem, Map<Date, Map<String[], Integer>> datesResult, Date chosenDate, String licensePlate, float actualFees, float laborCharge, float totalTime, Map<String, Map<Integer, Integer>> scParts) throws Exception {
 
 		// Get last service ID
 		String lastServiceQuery = "select MAX(SERVICE_ID) from SERVICES";
@@ -1739,23 +1754,30 @@ for(int k=0;k<servicesIDs.size();k++)
 		String insertServiceReln = "insert into SERVICERELN(LICENSE_NO, CUSTOMER_ID, SERVICE_ID) values('" + licensePlate +"', " + this.userID + ", " + serviceID + ")";
 		Application.stmt.executeUpdate(insertServiceReln);
 
-		//TODO: populate repair table
-
-/*
 		// Get last repair ID
-		String lastMaintQuery = "select MAX(MAINTENANCE_ID) from MAINTENANCE";
-		Application.rs = Application.stmt.executeQuery(lastMaintQuery);
-		int maintenanceID = 0;
+		String lastRepairQuery = "select MAX(REPAIR_ID) from REPAIR";
+		Application.rs = Application.stmt.executeQuery(lastRepairQuery);
+		int repairID = 0;
 		while(Application.rs.next()) {
-			maintenanceID = Application.rs.getInt("MAX(MAINTENANCE_ID)");
+			repairID = Application.rs.getInt("MAX(REPAIR_ID)");
 			break;
 		}
-		++maintenanceID;
+		++repairID;
+
+		String repairLookup = "select * from REPAIR_LOOKUP where REPAIR_LOOKUP_ID = " + problem;
+		String name = "", diagnostic = "";
+		float diagFee = 0.0F;
+		Application.rs = Application.stmt.executeQuery(repairLookup);
+		while(Application.rs.next()) {
+			name = Application.rs.getString("name");
+			diagnostic = Application.rs.getString("diagnostic");
+			diagFee = Application.rs.getFloat("diagnostic_fee");
+		}
 
 		// Insert : REPAIR
-		String insertMaintenance = "insert into MAINTENANCE(MAINTENANCE_ID, MAINTENANCE_TYPE, SERVICE_ID) values(" + maintenanceID + ", '" + serviceType + "', " + serviceID + ")";
-		Application.stmt.executeUpdate(insertMaintenance);
-*/
+		String insertRepair = "insert into REPAIR(REPAIR_ID, PROBLEM, ACTUAL_FEES, DIAGNOSTIC_REPORT, DIAGNOSTIC_FEES, SERVICE_ID) values(" + repairID + ", '" + name + "', " + actualFees + ", '" + diagnostic + "', "
+		+ diagFee + ", " + serviceID + ")";
+		Application.stmt.executeUpdate(insertRepair);
 
 		// Get last appointment ID
 		String lastApp = "select MAX(APPOINTMENT_ID) from APPOINTMENT";
@@ -2030,19 +2052,33 @@ for(int k=0;k<servicesIDs.size();k++)
         return index;
     }
 
-    private float findLaborCharges(String serviceType, String licensePlate, String basicServiceDetailsQuery) throws Exception {
+    private float findLaborCharges(String serviceType, int problem, String licensePlate, String basicServiceDetailsQuery, boolean isMaintenance) throws Exception {
         float laborCharge = 0.0F;
 		boolean firstTime = true;
-        if(serviceType != null && !serviceType.isEmpty()) {
-			// Check if this type of service is provided for first time. If yes - laborCharge = 0; Else - calculate
-			String prevServQuery = "select MAINTENANCE_TYPE from SERVICERELN inner join MAINTENANCE on SERVICERELN.SERVICE_ID = MAINTENANCE.SERVICE_ID where CUSTOMER_ID = " + this.userID + " and LICENSE_NO = '" + licensePlate + "' and MAINTENANCE_TYPE = '" + serviceType + "'";
-			Application.rs = Application.stmt.executeQuery(prevServQuery);
+		if(isMaintenance) {
+			if(serviceType != null && !serviceType.isEmpty()) {
+				// Check if this type of service is provided for first time. If yes - laborCharge = 0; Else - calculate
+				String prevServQuery = "select MAINTENANCE_TYPE from SERVICERELN inner join MAINTENANCE on SERVICERELN.SERVICE_ID = MAINTENANCE.SERVICE_ID where CUSTOMER_ID = " + this.userID + " and LICENSE_NO = '" + licensePlate + "' and MAINTENANCE_TYPE = '" + serviceType + "'";
+				Application.rs = Application.stmt.executeQuery(prevServQuery);
 
-			while(Application.rs.next()) {
-				firstTime = false;
-				break;
+				while(Application.rs.next()) {
+					firstTime = false;
+					break;
+				}
+			}
+		} else {
+			if(problem > 0) {
+				// Check if this repair problem is provided for first time
+				String prevServQuery = "select REPAIR.REPAIR_ID from SERVICERELN inner join REPAIR on SERVICERELN.SERVICE_ID = REPAIR.SERVICE_ID where CUSTOMER_ID = " + this.userID + " and LICENSE_NO = '" + licensePlate + "' and PROBLEM = (select NAME from REPAIR_LOOKUP where REPAIR_LOOKUP_ID = " + problem + ")";
+				Application.rs = Application.stmt.executeQuery(prevServQuery);
+
+				while(Application.rs.next()) {
+					firstTime = false;
+					break;
+				}
 			}
 		}
+
 
         if(firstTime) {
             laborCharge = 0.0F;
