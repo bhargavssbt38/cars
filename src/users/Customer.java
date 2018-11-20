@@ -1023,7 +1023,7 @@ for(int k=0;k<servicesIDs.size();k++)
     		  ehours.add(y);
     	  }
     	  Application.rs=Application.stmt.executeQuery("select problem from repair where service_id="+sid.get(b));
-    	  if(Application.rs==null)
+    	  if(!Application.rs.isBeforeFirst())
     	  {
     		  problem.add("No Repair");
     	  }else {
@@ -1032,19 +1032,21 @@ for(int k=0;k<servicesIDs.size();k++)
     		problem.add(c);
     	  }
     	  }
+    	
     	  Application.rs=Application.stmt.executeQuery("select maintenance_type from maintenance where service_id="+sid.get(b));
-    	  if(Application.rs==null)
-    	  { System.out.println("Hello");
+    	 
+    	  if(!Application.rs.isBeforeFirst())
+    	  { //System.out.println("Hello");
     		  mtype.add("No Maintenance");
     	  }else {
     	 	  while(Application.rs.next())
     	  { String d= Application.rs.getString("maintenance_type");
-    	     System.out.println("watha");
+    	     
     		mtype.add(d);
-    		System.out.print("\t"+d);
+    	
     	  }
+    	  
     	  }
-    		
     	}
     		
     	System.out.println("Upcoming Services for this customer" +id);
@@ -1055,7 +1057,7 @@ for(int k=0;k<servicesIDs.size();k++)
   	   System.out.print("\t License Plate: "+lplate.get(j));
   	   System.out.print("\t Estimated hours for this service: "+ehours.get(j));
   	   System.out.print("\t Repair: "+problem.get(j));
-  	   //System.out.print("\t Maintenance Type: "+mtype.get(j));
+  	   System.out.print("\t Maintenance Type: "+mtype.get(j));
   	   System.out.println();
   	  }
 
