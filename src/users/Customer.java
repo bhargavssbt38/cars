@@ -1440,7 +1440,7 @@ for(int k=0;k<servicesIDs.size();k++)
         return scParts;
     }
 
-/*    // TODO: query db & check if an order exists that satisfies parts requirements
+/*    // query db & check if an order exists that satisfies parts requirements
     // Return the date when order will be fulfilled
     // If no such order exists - return null
     private Date getExistingOrderForPartsDate() throws Exception {
@@ -1449,7 +1449,7 @@ for(int k=0;k<servicesIDs.size();k++)
         return orderDate;
     }
 
-    // TODO: insert into db new order for parts required
+    // insert into db new order for parts required
     // Return the date when the order will be fulfilled
     private Date placeOrder() throws Exception {
 
@@ -1477,7 +1477,6 @@ for(int k=0;k<servicesIDs.size();k++)
         String insertServiceReln = "insert into SERVICERELN(LICENSE_NO, CUSTOMER_ID, SERVICE_ID) values('" + licensePlate +"', " + this.userID + ", " + serviceID + ")";
         Application.stmt.executeUpdate(insertServiceReln);
 
-
         // Get last maintenance ID
         String lastMaintQuery = "select MAX(MAINTENANCE_ID) from MAINTENANCE";
         Application.rs = Application.stmt.executeQuery(lastMaintQuery);
@@ -1491,6 +1490,7 @@ for(int k=0;k<servicesIDs.size();k++)
         // Insert : MAINTENANCE
         String insertMaintenance = "insert into MAINTENANCE(MAINTENANCE_ID, MAINTENANCE_TYPE, SERVICE_ID) values(" + maintenanceID + ", '" + serviceType + "', " + serviceID + ")";
         Application.stmt.executeUpdate(insertMaintenance);
+
 
         // Get last appointment ID
         String lastApp = "select MAX(APPOINTMENT_ID) from APPOINTMENT";
@@ -1533,7 +1533,6 @@ for(int k=0;k<servicesIDs.size();k++)
                 if(partID == 7) continue;
                 int qty = partsMap.get(partID);
                 String update = "update INVENTORY set CURRENT_QTY = (CURRENT_QTY - " + qty + ") where SC_ID = '" + sc + "' and PART_ID = " + partID;
-                System.out.println(update);
                 Application.stmt.executeUpdate(update);
             }
         }
@@ -1553,7 +1552,7 @@ for(int k=0;k<servicesIDs.size();k++)
         System.out.println("Enter option: ");
         int option = scanner.nextInt();
         if(option >= 1 && option <= 7) {
-            displayDiagnosticReport(option);
+            displayDiagnosticReport(option, licensePlate);
             List<Date> dates = findRepairDates(licensePlate, currentMileage, mechanicName);
             if(dates.size() == 2) {
                 scheduleRepair2(option, dates, licensePlate, currentMileage, mechanicName);
@@ -1580,7 +1579,7 @@ for(int k=0;k<servicesIDs.size();k++)
     // Customer: Schedule Repair (Page 2)
     private void scheduleRepair2(int problem, List<Date> dates, String licensePlate, int currentMileage, String mechanicName) throws Exception {
         System.out.println("\nSCHEDULE REPAIR (Page 2):");
-        displayDiagnosticReport(problem);
+        displayDiagnosticReport(problem, licensePlate);
         System.out.println("Repair dates: ");
         System.out.println("\t1. " + dates.get(0).toString());
         System.out.println("\t2. " + dates.get(1).toString());
@@ -1611,10 +1610,34 @@ for(int k=0;k<servicesIDs.size();k++)
         }
     }
 
-    // TODO: display report with list of causes & parts needed to resolve the problem given
     // (For Customer: Schedule Repair (Page 1))
-    private void displayDiagnosticReport(int problem) {
+    private void displayDiagnosticReport(int problem, String licensePlate) throws Exception {
+    	System.out.println("\nDIAGNOSTIC REPORT:");
+		String query = "select * from REPAIR_LOOKUP where repair_lookup_id = " + problem;
+		Application.rs = Application.stmt.executeQuery(query);
+		while(Application.rs.next()) {
+			System.out.println("Repair name: " + Application.rs.getString("name"));
+			System.out.println("Diagnostic: " + Application.rs.getString("diagnostic"));
+			System.out.println("Diagnostic fee: " + Application.rs.getFloat("diagnostic_fee"));
+		}
 
+		// Finding car make & model for license plate
+		String carQuery = "select CAR_MAKE, CAR_MODEL from CAR where LICENSE_NO = '" + licensePlate + "'";
+		Application.rs = Application.stmt.executeQuery(carQuery);
+		String carMake = "", carModel = "";
+		while(Application.rs.next()) {
+			carMake = Application.rs.getString("CAR_MAKE");
+			carModel = Application.rs.getString("CAR_MODEL");
+		}
+
+		// Display parts required
+		System.out.println("Parts required: ");
+		String partsQuery = "select PARTS.PART_NAME from PARTS inner join BASIC_SERVICES_PARTS on PARTS.PART_ID = BASIC_SERVICES_PARTS.PART_ID where BASIC_SERVICES_PARTS.CAR_MAKE = '" + carMake + "' and BASIC_SERVICES_PARTS.CAR_MODEL = '" + carModel + "' and BASIC_SERVICE_ID in (select REPAIR_SERVICES_LOOKUP.BASIC_SERVICE_ID from REPAIR_SERVICES_LOOKUP where REPAIR_SERVICES_LOOKUP.REPAIR_LOOKUP_ID = " + problem + ")";
+		Application.rs = Application.stmt.executeQuery(partsQuery);
+		while(Application.rs.next()) {
+			String partName = Application.rs.getString("PART_NAME");
+			System.out.println("\t" + partName);
+		}
     }
 
     // TODO: find two earliest available repair dates
