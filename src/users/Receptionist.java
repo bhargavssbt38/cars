@@ -1125,14 +1125,10 @@ public class Receptionist extends Employee {
     //Receptionist: Reschedule Service
     //Query: Write a query to retrieving details of the customer(license plate, service id, service date, service type, service details
     private void rescheduleService() throws Exception {
-     System.out.println("Customer Enter your email address");
+     System.out.println("Enter customer email address");
      String mail=scanner.next();
      System.out.println("Customer Details");
-     System.out.println("License Plate");
-     System.out.println("Service ID");
-     System.out.println("Service Date");
-     System.out.println("Service Type");
-     System.out.println("Service Details");
+     displayUpcomingServices(mail);
      System.out.println("Menu");
      System.out.println("1. Pick a service");
      System.out.println("2. Go back");
@@ -1141,9 +1137,8 @@ public class Receptionist extends Employee {
      case 1: System.out.println("Choose one of the Service IDs to reschedule the service");
              //String sid=scanner.next();
              int serviceID = scanner.nextInt();
-             List<Date> dates = findRescheduleDate(serviceID);
-             rescheduleService2(serviceID, dates);
-              break;
+             findRescheduleDate(serviceID,mail);
+             break;
      
      case 2: landingPage();break;
      default: System.out.println("Invalid option");System.exit(0);
@@ -1152,11 +1147,62 @@ public class Receptionist extends Employee {
     }
     
     
-    private List<Date> findRescheduleDate(int serviceID) throws Exception {
+    private void findRescheduleDate(int serviceID,String email) throws Exception {
         List<Date> dates = new ArrayList<>();
-
-        return dates;
+        System.out.println("Choose whether reschedule is for maintenance or for repair(1/2)");
+        int choice=scanner.nextInt();
+        switch(choice)
+        {
+        case 1: Application.rs=Application.stmt.executeQuery("select license_no from servicereln where service_id="+serviceID);
+                String plate=null;
+                while(Application.rs.next())
+                {
+                	plate=Application.rs.getString("license_no");
+                }
+                Application.rs=Application.stmt.executeQuery("select  last_recorded_mileage from car where license_no='"+plate+"'");
+                int mileage=0;
+                while(Application.rs.next())
+                { 
+                	mileage=Application.rs.getInt("last_recorded_mileage");
+                }
+                String mname=null;
+                Application.rs=Application.stmt.executeQuery("select employee.emp_name from employee,mechanic,timeslot where timeslot.service_id="+serviceID+" AND timeslot.mechanic_id=mechanic.mechanic_id AND mechanic.emp_id=employee.emp_id");
+                while(Application.rs.next())
+                {
+                  mname=Application.rs.getString("emp_name");
+                }
+                System.out.println("Service ID: " +serviceID);
+                System.out.println("License Plate: "+plate);
+                System.out.println("Current Mileage: "+mileage);
+                System.out.println("Mechanic Name:"+mname); 
+                scheduleMaintenanceProcess(email,plate,mileage,mname);break;
+        case 2: Application.rs=Application.stmt.executeQuery("select license_no from servicereln where service_id="+serviceID);
+        String rplate=null;
+        while(Application.rs.next())
+        {
+        	rplate=Application.rs.getString("license_no");
+        }
+        Application.rs=Application.stmt.executeQuery("select  last_recorded_mileage from car where license_no='"+rplate+"'");
+        int rmileage=0;
+        while(Application.rs.next())
+        { rmileage=Application.rs.getInt("last_recorded_mileage");
+        }
+        String rmname=null;
+        Application.rs=Application.stmt.executeQuery("select employee.emp_name from employee,mechanic,timeslot where timeslot.service_id="+serviceID+" AND timeslot.mechanic_id=mechanic.mechanic_id AND mechanic.emp_id=employee.emp_id");
+        while(Application.rs.next())
+        {
+          rmname=Application.rs.getString("emp_name");
+        }
+        System.out.println("Service ID: " +serviceID);
+        System.out.println("License Plate: "+rplate);
+        System.out.println("Current Mileage: "+rmileage);
+        System.out.println("Mechanic Name:"+rmname); 
+        scheduleMaintenanceProcess(email,rplate,rmileage,rmname);break; 
+        
+        }
+        
     }
+
 
     // Customer: Reschedule Service (Page 2)
     private void rescheduleService2(int serviceID, List<Date> dates) throws Exception {
@@ -1198,6 +1244,121 @@ public class Receptionist extends Employee {
 
     }
 
+    
+    private void displayUpcomingServices(String email) throws Exception {
+    	int customer_id = 0;
+    	Application.rs = Application.stmt.executeQuery("select customer_id from customer where email = '"+email+"'");
+    	while(Application.rs.next())
+    		customer_id = Application.rs.getInt("customer_id");
+    	long millis=System.currentTimeMillis();  
+    	java.sql.Date date=new java.sql.Date(millis);  
+    	System.out.println("Current Date"+date); 
+    	//System.out.println("The current date is"+dateFormat.format(currentdate));
+    	Application.rs=Application.stmt.executeQuery("select license_no, service_id from servicereln where customer_id='"+customer_id+"'");
+    	List<String>license_no=new ArrayList();
+    	List<Integer>service_id = new ArrayList();
+    	while(Application.rs.next())
+    	{ String temp;
+    	  int temp1;
+    	  temp=Application.rs.getString("license_no");
+    	  temp1=Application.rs.getInt("service_id");
+    	  license_no.add(temp);
+    	  service_id.add(temp1);
+    	}
+    	List<Date>upcoming_services=new ArrayList();
+    	
+    	for(int i=0;i<service_id.size();i++)
+    	{Application.rs=Application.stmt.executeQuery("select service_date from timeslot where service_id="+service_id.get(i));
+    	  
+    	  while(Application.rs.next())
+    	  {//SimpleDateFormat tmp=new SimpleDateFormat("dd-MMM-yy");
+    	    Date temp;
+    	   temp=Application.rs.getDate("service_date");
+    	   
+    	   if(date.before(temp))
+    	   {   	   upcoming_services.add(temp);
+    	   }  
+    	  }
+    	}
+    	List<Integer>sid=new ArrayList();
+    	SimpleDateFormat sdf=new SimpleDateFormat("dd-MMM-yy");
+    	
+    	
+    	for(int a=0;a<upcoming_services.size();a++)
+    	{  String s=sdf.format(upcoming_services.get(a));
+    		String query= "select service_id from timeslot where service_date='"+s+"'";
+    		System.out.println("Query" +query);
+    	    Application.rs=Application.stmt.executeQuery(query);
+    	    while(Application.rs.next())
+    	    {
+    		int service=Application.rs.getInt("service_id");
+    		sid.add(service);
+    	    }
+    	}
+    	List<String>lplate=new ArrayList();
+    	List<Integer>ehours=new ArrayList();
+    	List <String>problem=new ArrayList();
+    	List<String>mtype=new ArrayList();
+    	//int flag=0,flag1=0;
+    	System.out.println("Service ID size: "+upcoming_services.size());
+    	for (int b=0;b<upcoming_services.size();b++)
+    	{  
+    	  Application.rs=Application.stmt.executeQuery("select license_no from servicereln where service_id="+sid.get(b));
+    	  while(Application.rs.next())
+    	  {String x=Application.rs.getString("license_no");
+    	    lplate.add(x);
+       	  }
+    	  Application.rs=Application.stmt.executeQuery("select estimated_hours from services where service_id="+sid.get(b));
+    	  while(Application.rs.next())
+    	  {int y=Application.rs.getInt("estimated_hours");
+    		  ehours.add(y);
+    	  }
+    	  String Query="select problem from repair where service_id="+sid.get(b);
+    	  System.out.println(Query);
+       /*Application.rs=Application.stmt.executeQuery(Query);
+   
+          while(Application.rs.next())
+    		  { String c= Application.rs.getString("problem");
+    		  System.out.println("Problem"+c); 
+    		  problem.add(c); 
+    		  }*/
+    	  
+    	  
+    	  //Application.rs=Application.stmt.executeQuery("select maintenance_type from maintenance where service_id="+sid.get(b));
+    	 
+    	 /*if(Application.rs.next())
+    	 {	  
+    	   while(Application.rs.next())
+    	  { String d= Application.rs.getString("maintenance_type");
+              
+    	     { mtype.add(d);}
+    	  }}  else
+    	  {
+    		{ mtype.add("No Maintenance");
+    		
+    		}
+    	  }*/
+    	  
+    }
+    	
+
+
+    		
+    	System.out.println("Upcoming Services for this customer" +customer_id);
+    	
+  	  for(int j=0;j<upcoming_services.size();j++)
+  	  {System.out.print("Date: "+upcoming_services.get(j));
+  	   System.out.print("\t Service ID: " +sid.get(j));
+  	   System.out.print("\t License Plate: "+lplate.get(j));
+  	   System.out.print("\t Estimated hours for this service: "+ehours.get(j));
+  	   //System.out.print("\t Repair: "+problem.get(j));
+  	   //System.out.print("\t Maintenance Type: "+mtype.get(j));
+  	   System.out.println();
+  	  }
+    	  
+    }
+    
+    
 
     //Receptionist: Reschedule Service
     //TODO: Write a query to identify 2 available dates based on the service id  and display them.
