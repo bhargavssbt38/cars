@@ -951,10 +951,12 @@ for(int k=0;k<servicesIDs.size();k++)
         {
           rmname=Application.rs.getString("emp_name");
         }
+        int rproblem;
         System.out.println("Service ID: " +serviceID);
         System.out.println("License Plate: "+rplate);
         System.out.println("Current Mileage: "+rmileage);
-        System.out.println("Mechanic Name:"+rmname); scheduleMaintenanceProcess(rplate,rmileage,rmname);break; 
+        System.out.println("Mechanic Name:"+rmname);  
+        System.out.println("Enter the Repair problem"); rproblem=scanner.nextInt(); scheduleRepairProcess(rproblem,rplate,rmileage,rmname);break;
         
         }
         
@@ -1047,7 +1049,7 @@ for(int k=0;k<servicesIDs.size();k++)
     	for(int a=0;a<upcoming_services.size();a++)
     	{  String s=sdf.format(upcoming_services.get(a));
     		String query= "select service_id from timeslot where service_date='"+s+"'";
-    		System.out.println("Query" +query);
+    		
     	    Application.rs=Application.stmt.executeQuery(query);
     	    while(Application.rs.next())
     	    {
@@ -1060,9 +1062,9 @@ for(int k=0;k<servicesIDs.size();k++)
     	List <String>problem=new ArrayList();
     	List<String>mtype=new ArrayList();
     	//int flag=0,flag1=0;
-    	System.out.println("Service ID size: "+upcoming_services.size());
+    	
     	for (int b=0;b<upcoming_services.size();b++)
-    	{  
+    	{  String u=sdf.format(upcoming_services.get(b));
     	  Application.rs=Application.stmt.executeQuery("select license_no from servicereln where service_id="+sid.get(b));
     	  while(Application.rs.next())
     	  {String x=Application.rs.getString("license_no");
@@ -1073,33 +1075,32 @@ for(int k=0;k<servicesIDs.size();k++)
     	  {int y=Application.rs.getInt("estimated_hours");
     		  ehours.add(y);
     	  }
-    	  String Query="select problem from repair where service_id="+sid.get(b);
-    	  System.out.println(Query);
-       /*Application.rs=Application.stmt.executeQuery(Query);
+    	  String Query="select repair.problem from repair,timeslot where repair.service_id="+sid.get(b)+"AND repair.service_id=timeslot.service_id AND timeslot.service_date='"+u+"'";
+    	 
+       Application.rs=Application.stmt.executeQuery(Query);
    
           while(Application.rs.next())
     		  { String c= Application.rs.getString("problem");
-    		  System.out.println("Problem"+c); 
-    		  problem.add(c); 
-    		  }*/
+    		  System.out.println("Problem :"+c); 
+    		
+    		  }
     	  
     	  
-    	  //Application.rs=Application.stmt.executeQuery("select maintenance_type from maintenance where service_id="+sid.get(b));
+    	  Application.rs=Application.stmt.executeQuery("select maintenance.maintenance_type from maintenance,timeslot where maintenance.service_id="+sid.get(b)+"AND maintenance.service_id=timeslot.service_id AND timeslot.service_date='"+u+"'");
     	 
-    	 /*if(Application.rs.next())
-    	 {	  
+    	   
     	   while(Application.rs.next())
     	  { String d= Application.rs.getString("maintenance_type");
-              
-    	     { mtype.add(d);}
-    	  }}  else
+              System.out.println("Maintenance Type: "+d);
+    	      
+    	  }} /* else
     	  {
     		{ mtype.add("No Maintenance");
     		
     		}
     	  }*/
     	  
-    }
+    
     	
 
 
@@ -1112,7 +1113,7 @@ for(int k=0;k<servicesIDs.size();k++)
   	   System.out.print("\t License Plate: "+lplate.get(j));
   	   System.out.print("\t Estimated hours for this service: "+ehours.get(j));
   	   //System.out.print("\t Repair: "+problem.get(j));
-  	   //System.out.print("\t Maintenance Type: "+mtype.get(j));
+  	  // System.out.print("\t Maintenance Type: "+mtype.get(j));
   	   System.out.println();
   	  }
     	  
@@ -1305,7 +1306,8 @@ for(int k=0;k<servicesIDs.size();k++)
                 int dateNum = scanner.nextInt();
                 if(dateNum == 1 || dateNum == 2) {
                     createMaintenanceService(datesResult, dateMap.get(dateNum), licensePlate, totalTime, serviceType, laborCharge, scParts);
-                    scheduleService();
+                   // scheduleService();
+                    landingPage();
                 } else {
                     System.out.println("Invalid date chosen. Try again.");
                     scheduleMaintenance2(datesResult, licensePlate, currentMileage, mechanicName, totalTime, serviceType, laborCharge, scParts);
